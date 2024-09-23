@@ -1,6 +1,7 @@
 //
 // R5 demo application
-// IRQ from PS - test #1
+// IRQs from PL
+// test #1 : IRQ from register bank
 //
 // latest rev: sept 23 2024
 //
