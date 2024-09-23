@@ -31,6 +31,7 @@
 
 XScuGic interruptController;
 static XScuGic_Config *gicConfig;
+unsigned long int irq_cntr[3];
 
 
 // ##########  protos  ########################
@@ -41,10 +42,19 @@ int main(void);
 
 // ##########  implementation  ################
 
+static void AssertPrint(const char8 *FilenamePtr, s32 LineNumber)
+  {
+  xil_printf("ASSERT: File Name: %s ", FilenamePtr);
+  xil_printf("Line Number: %d\r\n", LineNumber);
+  }
+
+
+// -----------------------------------------------------------
+
 void RegbankIRS(void *CallbackRef)
   {
   // Regbank Interrupt Servicing Routine
-  printf("IRQ received from REGBANK\n");
+  printf("IRQ received from REGBANK (%lu)\n", ++irq_cntr[2]);
   }
 
 // -----------------------------------------------------------
@@ -52,8 +62,9 @@ void RegbankIRS(void *CallbackRef)
 int SetupIRQs(void)
   {
   int status;
+  u8  irqPriority, irqSensitivity;
 
-  // setup IRQ system
+  // setup IRQ system --------------------------
 
   gicConfig=XScuGic_LookupConfig(INTC_DEVICE_ID);
 	if(NULL==gicConfig) 
@@ -72,15 +83,21 @@ int SetupIRQs(void)
                                &interruptController);
   Xil_ExceptionEnable();
 
-  // now register the IRQs I am interested in
+  // now register the IRQs I am interested in ----------------------------
 
-  // register ISR for REGBANK IRQ
+  // register ISR for REGBANK IRQ ---------------------------------
   status=XScuGic_Connect(&interruptController, INTC_REGBANK_IRQ_ID,
                          (Xil_ExceptionHandler)RegbankIRS,
                          (void *)&interruptController);
   if(status!=XST_SUCCESS)
     return XST_FAILURE;
+  // set priority and endge sensitivity
+  XScuGic_GetPriorityTriggerType(&interruptController, INTC_REGBANK_IRQ_ID, &irqPriority, &irqSensitivity);
+  //irqPriority = 0;           // in step of 8; 0=highest; 248=lowest
+  irqSensitivity=0x03;         // rising edge
+  XScuGic_SetPriorityTriggerType(&interruptController, INTC_REGBANK_IRQ_ID, irqPriority, irqSensitivity);
 
+  // now enable the IRQ
   XScuGic_Enable(&interruptController, INTC_REGBANK_IRQ_ID);
 
   return XST_SUCCESS;
@@ -101,6 +118,14 @@ int main()
   setvbuf (stdout, NULL, _IONBF, 0);
   setvbuf (stdin, NULL, _IONBF, 0);
   
+  // ASSERT callback for debug, in case of an exception
+  Xil_AssertSetCallback(AssertPrint);
+  
+  // init number of IRQ served
+  irq_cntr[0]=0;
+  irq_cntr[1]=0;
+  irq_cntr[2]=0;
+
   status = SetupIRQs();
   if(status!=XST_SUCCESS)
     {
