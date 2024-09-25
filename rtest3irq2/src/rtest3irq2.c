@@ -10,6 +10,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include "xil_io.h"
 #include "xil_exception.h"
 #include "xparameters.h"
@@ -224,13 +225,16 @@ int main()
   while(1)
     {
     printf("\nInput register number to read (0..15)\n");
-    scanf("%u",&thereg);
-    if(thereg>15) break;
-    theval=*(REGBANK+thereg);
-    printf("Reg #%02u is 0x%08X\n", thereg, theval);
+    status=scanf("%u",&thereg);
+    if(status>0)
+      {
+      if(thereg>15) break;
+      theval=*(REGBANK+thereg);
+      printf("Reg #%02u is 0x%08X\n", thereg, theval);
+      }
     }
 
-
+  printf("\nExiting\n");
   cleanup_platform();
   return 0;
   }
