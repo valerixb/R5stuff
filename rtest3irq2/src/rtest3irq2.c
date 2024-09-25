@@ -70,7 +70,7 @@ static void AssertPrint(const char8 *FilenamePtr, s32 LineNumber)
 
 // -----------------------------------------------------------
 
-void RegbankIRS(void *CallbackRef)
+void RegbankIRS(void *callbackRef)
   {
   // Regbank Interrupt Servicing Routine
   printf("IRQ received from REGBANK (%lu)\n", ++irq_cntr[2]);
@@ -79,10 +79,14 @@ void RegbankIRS(void *CallbackRef)
 
 // -----------------------------------------------------------
 
-void GpioIRS(void *CallbackRef)
+void GpioIRS(void *callbackRef)
   {
+  XGpio *gpioPtr = (XGpio *)callbackRef;
+  
   // AXI GPIO Interrupt Servicing Routine
   printf("IRQ received from AXI GPIO (%lu)\n", ++irq_cntr[1]);
+
+	XGpio_InterruptClear(gpioPtr, GPIO_BUTTON_IRQ_MASK);
   }
 
 
@@ -135,7 +139,7 @@ int SetupIRQs(void)
   // register ISR
   status=XScuGic_Connect(&interruptController, INTC_AXIGPIO_IRQ_ID,
                          (Xil_ExceptionHandler)GpioIRS,
-                         (void *)&interruptController);
+                         (void *)&theGpio);
   if(status!=XST_SUCCESS)
     return XST_FAILURE;
   // set priority and endge sensitivity
