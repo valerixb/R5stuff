@@ -19,6 +19,7 @@
 #include "xil_types.h"
 #include "xscugic.h"
 #include "xil_util.h"
+#include "xil_exception.h"
 #include "xplatform_info.h"
 #include "platform.h"
 #include "xgpio.h"
@@ -52,6 +53,7 @@ static XGpio_Config *gpioConfig;
 
 // ##########  protos  ########################
 
+void LocalAbortHandler(void *callbackRef);
 void RegbankIRS(void *CallbackRef);
 void GpioIRS(void *CallbackRef);
 int SetupAXIGPIO(void);
@@ -65,6 +67,15 @@ static void AssertPrint(const char8 *FilenamePtr, s32 LineNumber)
   {
   xil_printf("ASSERT: File Name: %s ", FilenamePtr);
   xil_printf("Line Number: %d\r\n", LineNumber);
+  }
+
+
+// -----------------------------------------------------------
+
+void LocalAbortHandler(void *callbackRef)
+  {
+  // Data Abort exception handler
+  printf("DATA ABORT exception\n");
   }
 
 
@@ -212,7 +223,9 @@ int main()
   
   // ASSERT callback for debug, in case of an exception
   Xil_AssertSetCallback(AssertPrint);
-  
+  // register a call back for data abort exception
+  Xil_ExceptionRegisterHandler(XIL_EXCEPTION_ID_DATA_ABORT_INT, LocalAbortHandler, NULL);
+
   // init number of IRQ served
   irq_cntr[0]=0;
   irq_cntr[1]=0;
