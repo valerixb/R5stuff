@@ -106,7 +106,8 @@ void LocalUndefinedHandler(void *callbackRef)
 void RegbankISR(void *callbackRef)
   {
   // Regbank Interrupt Servicing Routine
-  printf("IRQ received from REGBANK (%lu)\n", ++irq_cntr[2]);
+  irq_cntr[2]++;
+  //printf("IRQ received from REGBANK (%lu)\n", irq_cntr[2]);
   }
 
 
@@ -117,7 +118,8 @@ void GpioISR(void *callbackRef)
   XGpio *gpioPtr = (XGpio *)callbackRef;
   
   // AXI GPIO Interrupt Servicing Routine
-  printf("IRQ received from AXI GPIO (%lu)\n", ++irq_cntr[1]);
+  irq_cntr[1]++;
+  //printf("IRQ received from AXI GPIO (%lu)\n", irq_cntr[1]);
 
 	XGpio_InterruptClear(gpioPtr, GPIO_BUTTON_IRQ_MASK);
   }
@@ -130,7 +132,8 @@ static void TimerISR(void *callbackRef, u8 timer_num)
   XTmrCtr *timerPtr = (XTmrCtr *)callbackRef;
   
   // AXI timer Interrupt Servicing Routine
-  printf("IRQ received from AXI timer (%lu)\n", ++irq_cntr[0]);
+  irq_cntr[0]++;
+  //printf("IRQ received from AXI timer (%lu)\n", ++irq_cntr[0]);
   }
 
 
@@ -353,6 +356,9 @@ int main()
 
   while(1)
     {
+    printf("\nTimer   IRQs: %d\n",irq_cntr[0]);
+    printf(  "GPIO    IRQs: %d\n",irq_cntr[1]);
+    printf(  "RegBank IRQs: %d\n",irq_cntr[2]);
     printf("\nInput register number to read (0..15)\n");
     status=scanf("%u",&thereg);
     if(status>0)
