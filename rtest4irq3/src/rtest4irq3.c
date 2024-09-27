@@ -13,7 +13,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include "xil_io.h"
-#include "xil_exception.h"
 #include "xparameters.h"
 #include "xil_cache.h"
 #include "xil_printf.h"
@@ -64,6 +63,7 @@ static XTmrCtr_Config *timerConfig;
 // ##########  protos  ########################
 
 void LocalAbortHandler(void *callbackRef);
+void LocalUndefinedHandler(void *callbackRef);
 void RegbankISR(void *CallbackRef);
 void GpioISR(void *CallbackRef);
 static void TimerISR(void *callbackRef, u8 timer_num);
@@ -89,6 +89,15 @@ void LocalAbortHandler(void *callbackRef)
   {
   // Data Abort exception handler
   printf("DATA ABORT exception\n");
+  }
+
+
+// -----------------------------------------------------------
+
+void LocalUndefinedHandler(void *callbackRef)
+  {
+  // Undefined Instruction exception handler
+  printf("UNDEFINED INSTRUCTION exception\n");
   }
 
 
@@ -145,6 +154,8 @@ int SetupIRQs(void)
   status=XScuGic_SelfTest(&interruptController);
   if(status!=XST_SUCCESS)
     return XST_FAILURE;
+
+  Xil_ExceptionInit();
 
   Xil_ExceptionRegisterHandler(XIL_EXCEPTION_ID_INT,
                                (Xil_ExceptionHandler) XScuGic_InterruptHandler,
@@ -283,8 +294,9 @@ void SetupExceptions(void)
   {
   // ASSERT callback for debug, in case of an exception
   Xil_AssertSetCallback(AssertPrint);
-  // register a call back for data abort exception
+  // register some exception call backs
   Xil_ExceptionRegisterHandler(XIL_EXCEPTION_ID_DATA_ABORT_INT, LocalAbortHandler, NULL);
+  //Xil_ExceptionRegisterHandler(XIL_EXCEPTION_ID_UNDEFINED_INT, LocalUndefinedHandler, NULL);
   }
 
 
