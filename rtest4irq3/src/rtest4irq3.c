@@ -30,11 +30,11 @@
 
 #define INTC_DEVICE_ID        XPAR_SCUGIC_SINGLE_DEVICE_ID
 // AXI timer has IRQ ID 121, which is XPS_FPGA0_INT_ID in xparameters_ps.h
-#define INTC_TIMER_IRQ_ID	    XPS_FPGA0_INT_ID
+#define INTC_TIMER_IRQ_ID     XPS_FPGA0_INT_ID
 // AXI GPIO has IRQ ID 122, which is XPS_FPGA1_INT_ID in xparameters_ps.h
-#define INTC_AXIGPIO_IRQ_ID	  XPS_FPGA1_INT_ID
+#define INTC_AXIGPIO_IRQ_ID   XPS_FPGA1_INT_ID
 // PL regbank has IRQ ID 123, which is XPS_FPGA2_INT_ID in xparameters_ps.h
-#define INTC_REGBANK_IRQ_ID	  XPS_FPGA2_INT_ID
+#define INTC_REGBANK_IRQ_ID   XPS_FPGA2_INT_ID
 // PL regbank has base address 0x8002_0000,  which is XPAR_REGBANK_0_BASEADDR in xparameters.h
 #define REGBANK               (volatile unsigned int *)(XPAR_REGBANK_0_BASEADDR)
 // AXI GPIO ID is 0, even if it's not defined in xparameters.h
@@ -107,6 +107,7 @@ void RegbankISR(void *callbackRef)
   {
   // Regbank Interrupt Servicing Routine
   irq_cntr[2]++;
+  // don't use printf in ISR! Xilinx standalone stdio is NOT thread safe
   //printf("IRQ received from REGBANK (%lu)\n", irq_cntr[2]);
   }
 
@@ -119,9 +120,10 @@ void GpioISR(void *callbackRef)
   
   // AXI GPIO Interrupt Servicing Routine
   irq_cntr[1]++;
+  // don't use printf in ISR! Xilinx standalone stdio is NOT thread safe
   //printf("IRQ received from AXI GPIO (%lu)\n", irq_cntr[1]);
 
-	XGpio_InterruptClear(gpioPtr, GPIO_BUTTON_IRQ_MASK);
+  XGpio_InterruptClear(gpioPtr, GPIO_BUTTON_IRQ_MASK);
   }
 
 
@@ -133,6 +135,7 @@ static void TimerISR(void *callbackRef, u8 timer_num)
   
   // AXI timer Interrupt Servicing Routine
   irq_cntr[0]++;
+  // don't use printf in ISR! Xilinx standalone stdio is NOT thread safe
   //printf("IRQ received from AXI timer (%lu)\n", ++irq_cntr[0]);
   }
 
@@ -147,7 +150,7 @@ int SetupIRQs(void)
   // setup IRQ system --------------------------
 
   gicConfig=XScuGic_LookupConfig(INTC_DEVICE_ID);
-	if(NULL==gicConfig) 
+  if(NULL==gicConfig) 
     return XST_FAILURE;
 
   status=XScuGic_CfgInitialize(&interruptController, gicConfig, gicConfig->CpuBaseAddress);
@@ -356,9 +359,9 @@ int main()
 
   while(1)
     {
-    printf("\nTimer   IRQs: %d\n",irq_cntr[0]);
-    printf(  "GPIO    IRQs: %d\n",irq_cntr[1]);
-    printf(  "RegBank IRQs: %d\n",irq_cntr[2]);
+    printf("\nTimer   IRQs: %lu\n",irq_cntr[0]);
+    printf(  "GPIO    IRQs: %lu\n",irq_cntr[1]);
+    printf(  "RegBank IRQs: %lu\n",irq_cntr[2]);
     printf("\nInput register number to read (0..15)\n");
     status=scanf("%u",&thereg);
     if(status>0)
