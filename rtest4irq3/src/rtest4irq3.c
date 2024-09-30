@@ -6,7 +6,7 @@
 //    - IRQ from AXI GPIO
 //    - IRQ from AXI timer
 //
-// latest rev: sept 27 2024
+// latest rev: sept 30 2024
 //
 
 #include <stdio.h>
@@ -70,7 +70,9 @@ static void TimerISR(void *callbackRef, u8 timer_num);
 int SetupAXIGPIO(void);
 int SetupAXItimer(void);
 int SetupIRQs(void);
+int CleanupIRQs(void);
 int SetupSystem(void);
+int CleanupSystem(void);
 void SetupExceptions(void);
 int main(void);
 
@@ -234,6 +236,29 @@ int SetupIRQs(void)
 
 // -----------------------------------------------------------
 
+int CleanupIRQs(void)
+  {
+  // Cleanup PL REGBANK IRQ ---------------------------------
+  XScuGic_Disable(&interruptController, INTC_REGBANK_IRQ_ID);
+  XScuGic_Disconnect(&interruptController, INTC_REGBANK_IRQ_ID);
+
+  // Cleanup AXI GPIO IRQs ---------------------------------
+  XGpio_InterruptGlobalDisable(&theGpio);
+  XGpio_InterruptDisable(&theGpio, GPIO_BUTTON_IRQ_MASK);
+  XScuGic_Disable(&interruptController, INTC_AXIGPIO_IRQ_ID);
+  XScuGic_Disconnect(&interruptController, INTC_AXIGPIO_IRQ_ID);
+
+  // Cleanup AXI timer IRQs ---------------------------------
+  XTmrCtr_Stop(&theTimer, TIMER_NUMBER);
+  XScuGic_Disable(&interruptController, INTC_TIMER_IRQ_ID);
+  XScuGic_Disconnect(&interruptController, INTC_TIMER_IRQ_ID);
+
+  return XST_SUCCESS;
+  }
+
+
+// -----------------------------------------------------------
+
 int SetupAXIGPIO(void)
   {
   int status;
@@ -331,6 +356,19 @@ int SetupSystem(void)
 
 // -----------------------------------------------------------
 
+int CleanupSystem(void)
+  {
+  int status;
+
+  status = CleanupIRQs();
+  if(status!=XST_SUCCESS)
+    return XST_FAILURE;
+
+  return XST_SUCCESS;
+  }
+
+// -----------------------------------------------------------
+
 int main()
   {
   unsigned int thereg, theval;
@@ -373,6 +411,15 @@ int main()
     }
 
   printf("\nExiting\n");
+
+  status = CleanupSystem();
+  if(status!=XST_SUCCESS)
+    {
+    printf("ERROR Cleaning up IRQ System\n");
+    // continue anyway, as we are shutting down
+    //return status;
+    }
+
   cleanup_platform();
   return 0;
   }
