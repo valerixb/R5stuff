@@ -107,10 +107,16 @@ void LocalUndefinedHandler(void *callbackRef)
 
 void RegbankISR(void *callbackRef)
   {
+  unsigned int thereg, theval;
+
   // Regbank Interrupt Servicing Routine
   irq_cntr[2]++;
   // don't use printf in ISR! Xilinx standalone stdio is NOT thread safe
   //printf("IRQ received from REGBANK (%lu)\n", irq_cntr[2]);
+  // manually reset IRQ bit in regbank
+  theval=*(REGBANK+0);
+  theval&=0xFFFFFFFE;
+  *(REGBANK+0)=theval;
   }
 
 
