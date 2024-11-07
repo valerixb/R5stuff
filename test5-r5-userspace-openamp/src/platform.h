@@ -55,7 +55,6 @@
 
 #define _rproc_wait() asm volatile("wfi")
 
-
 struct remoteproc_priv
   {
   const char *kick_dev_name;

@@ -413,9 +413,9 @@ static struct remoteproc *SetupRpmsg(int proc_index, int rsc_index)
   int rsc_size;
   metal_phys_addr_t pa;
 
-  (void) proc_index;    // avoid warning on unused parameter
+  (void)proc_index;    // avoid warning on unused parameter
   rsc_table = get_resource_table(rsc_index, &rsc_size);
-	// register IPI device
+  // register IPI device
   if(metal_register_generic_device(&kick_device))
     return NULL;
   // init remoteproc instance
@@ -455,12 +455,13 @@ static void system_metal_logger(enum metal_log_level level, const char *format, 
   (void)format;
   }
 
+
 // -----------------------------------------------------------
 
 int SetupSystem(void **platformp)
   {
   int status;
-	struct remoteproc *rproc;
+  struct remoteproc *rproc;
   struct metal_init_params metal_param = 
     {
     .log_handler = system_metal_logger,
@@ -469,9 +470,9 @@ int SetupSystem(void **platformp)
 
   if(!platformp)
     {
-		LPRINTF("NULL platform pointer -");
-		return -EINVAL;
-	  }
+    LPRINTF("NULL platform pointer -");
+    return -EINVAL;
+    }
   
   metal_init(&metal_param);
 
