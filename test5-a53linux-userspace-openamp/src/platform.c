@@ -11,7 +11,7 @@
 static struct rpmsg_virtio_shm_pool shpool;
 
 
-struct  rpmsg_device *create_rpmsg_vdev(void *platform, unsigned int vdev_index,
+struct rpmsg_device *create_rpmsg_vdev(void *platform, unsigned int vdev_index,
     unsigned int role,
     void (*rst_cb)(struct virtio_device *vdev),
     rpmsg_ns_bind_cb ns_bind_cb)
@@ -62,57 +62,38 @@ struct  rpmsg_device *create_rpmsg_vdev(void *platform, unsigned int vdev_index,
   }
 
 int platform_poll(void *priv)
-{
-	struct remoteproc *rproc = priv;
-	struct remoteproc_priv *prproc;
-	unsigned int flags;
-	int ret;
+  {
+  struct remoteproc *rproc = priv;
+  struct remoteproc_priv *prproc;
+  unsigned int flags;
+  int ret;
 
-	prproc = rproc->priv;
-	while(1) {
-#ifdef RPMSG_NO_IPI
-		(void)flags;
-		if (metal_io_read32(prproc->shm_poll_io, 0)) {
-			ret = remoteproc_get_notification(rproc,
-							  RSC_NOTIFY_ID_ANY);
-			if (ret)
-				return ret;
-			break;
-		}
-#else
-		flags = metal_irq_save_disable();
-		if (!(atomic_flag_test_and_set(&prproc->ipi_nokick))) {
-			metal_irq_restore_enable(flags);
-			ret = remoteproc_get_notification(rproc,
-							  RSC_NOTIFY_ID_ANY);
-			if (ret)
-				return ret;
-			break;
-		}
-		_rproc_wait();
-		metal_irq_restore_enable(flags);
-#endif /* RPMSG_NO_IPI */
-	}
-	return 0;
-}
+  prproc = rproc->priv;
+  while(1) 
+    {
+    flags = metal_irq_save_disable();
+    if(!(atomic_flag_test_and_set(&prproc->ipi_nokick)))
+      {
+      metal_irq_restore_enable(flags);
+      ret = remoteproc_get_notification(rproc, RSC_NOTIFY_ID_ANY);
+      if (ret)
+        return ret;
+      break;
+      }
+    _rproc_wait();
+    metal_irq_restore_enable(flags);
+    }
+  return 0;
+  }
 
 void release_rpmsg_vdev(struct rpmsg_device *rpdev, void *platform)
-{
-	struct rpmsg_virtio_device *rpvdev;
-	struct remoteproc *rproc;
+  {
+  struct rpmsg_virtio_device *rpvdev;
+  struct remoteproc *rproc;
 
-	rpvdev = metal_container_of(rpdev, struct rpmsg_virtio_device, rdev);
-	rproc = platform;
+  rpvdev = metal_container_of(rpdev, struct rpmsg_virtio_device, rdev);
+  rproc = platform;
 
-	rpmsg_deinit_vdev(rpvdev);
-	remoteproc_remove_virtio(rproc, rpvdev->vdev);
-}
-
-void platform_cleanup(void *platform)
-{
-	struct remoteproc *rproc = platform;
-
-	if (rproc)
-		remoteproc_remove(rproc);
-	metal_finish();
-}
+  rpmsg_deinit_vdev(rpvdev);
+  remoteproc_remove_virtio(rproc, rpvdev->vdev);
+  }

@@ -33,6 +33,7 @@ void *platform;
 // openamp
 static struct rpmsg_endpoint lept;
 static LOOP_PARAM_MSG_TYPE gLoopParameters;
+static LOOP_PARAM_MSG_TYPE *gMsgPtr;
 struct rpmsg_device *rpdev;
 static struct remoteproc rproc_inst;
 
@@ -120,37 +121,7 @@ int app (struct rpmsg_device *rdev, void *priv)
 	LPRINTF(" 1 - Send data to remote core, retrieve the echo");
 	LPRINTF(" and validate its integrity ..\r\n");
 
-	max_size = rpmsg_virtio_get_buffer_size(rdev);
-	if (max_size < 0) {
-		LPERROR("No available buffer size.\r\n");
-		return -1;
-	}
-	max_size -= sizeof(struct _payload);
-	num_payloads = max_size - PAYLOAD_MIN_SIZE + 1;
-	i_payload =
-	    (struct _payload *)metal_allocate_memory(2 * sizeof(unsigned long) +
-				      max_size);
-
-	if (!i_payload) {
-		LPERROR("memory allocation failed.\r\n");
-		return -1;
-	}
-
-	/* Create RPMsg endpoint */
-	ret = rpmsg_create_ept(&lept, rdev, RPMSG_SERVICE_NAME,
-			       RPMSG_ADDR_ANY, RPMSG_ADDR_ANY,
-			       rpmsg_endpoint_cb, rpmsg_service_unbind);
-
-	if (ret) {
-		LPERROR("Failed to create RPMsg endpoint.\r\n");
-		metal_free_memory(i_payload);
-		return ret;
-	}
-
-	while (!is_rpmsg_ept_ready(&lept))
-		platform_poll(priv);
-
-	LPRINTF("RPMSG endpoint is binded with remote.\r\n");
+	
 	for (i = 0, size = PAYLOAD_MIN_SIZE; i < num_payloads; i++, size++) {
 		i_payload->num = i;
 		i_payload->size = size;
@@ -244,7 +215,7 @@ static void system_metal_logger(enum metal_log_level level, const char *format, 
 
 int SetupSystem(void **platformp)
   {
-  int status;
+  int status, max_size;
   struct remoteproc *rproc;
   struct metal_init_params metal_param = 
     {
@@ -273,6 +244,40 @@ int SetupSystem(void **platformp)
     return -1;
     }
   
+  LPRINTF("Allocating msg buffer\n");
+  max_size = rpmsg_virtio_get_buffer_size(rpdev);
+  if(max_size < sizeof(LOOP_PARAM_MSG_TYPE))
+    {
+    LPERROR("too small buffer size.\r\n");
+    return -1;
+    }
+
+  gMsgPtr = (LOOP_PARAM_MSG_TYPE *)metal_allocate_memory(sizeof(LOOP_PARAM_MSG_TYPE));
+
+  if(!gMsgPtr)
+    {
+    LPERROR("msg buffer allocation failed.\n");
+    return -1;
+    }
+
+  LPRINTF("Try to create rpmsg endpoint.\n");
+  status = rpmsg_create_ept(&lept, rpdev, RPMSG_SERVICE_NAME,
+                            RPMSG_ADDR_ANY, RPMSG_ADDR_ANY,
+                            rpmsg_endpoint_cb,
+                            rpmsg_service_unbind);
+  if(status)
+    {
+    LPERROR("Failed to create endpoint.\n");
+    metal_free_memory(gMsgPtr);
+    return -1;
+    }
+  LPRINTF("Successfully created rpmsg endpoint.\n");
+
+  LPRINTF("Waiting for remote answer...\n");
+	while(!is_rpmsg_ept_ready(&lept))
+		platform_poll(platform);
+
+	LPRINTF("RPMSG endpoint is binded with remote.\r\n");
   return 0;
   }
 
@@ -281,6 +286,14 @@ int SetupSystem(void **platformp)
 
 int CleanupSystem(void *platform)
   {
+  struct remoteproc *rproc = platform;
+
+	rpmsg_destroy_ept(&lept);
+	metal_free_memory(gMsgPtr);
+	release_rpmsg_vdev(rpdev, platform);
+  if(rproc)
+    remoteproc_remove(rproc);
+  metal_finish();
   }
 
 
@@ -301,19 +314,21 @@ int main(int argc, char *argv[])
     return status;
     }
 
+  // main loop here
+  
+  // TODO  
+  
+  
+  // cleanup and exit
+  LPRINTF("\nExiting\n");
 
+  status = CleanupSystem(platform);
+  if(status!=0)
+    {
+    LPRINTF("ERROR Cleaning up System\n");
+    // continue anyway, as we are shutting down
+    //return status;
+    }
 
-	/* Initialize platform */
- 
-
-			/* DA FARE */app(rpdev, platform);
-			/* DA FARE */release_rpmsg_vdev(rpdev, platform);
-			
-		
-	
-
-	LPRINTF("Stopping application...\r\n");
-	/* DA FARE */platform_cleanup(platform);
-
-	return 0;
+  return 0;
   }
