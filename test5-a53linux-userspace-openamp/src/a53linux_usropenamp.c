@@ -301,7 +301,8 @@ int CleanupSystem(void *platform)
 
 int main(int argc, char *argv[])
   {
-  int status;
+  int status, p2;
+  float p1;
 
   // remove buffering from stdin and stdout
   setvbuf (stdout, NULL, _IONBF, 0);
@@ -314,10 +315,24 @@ int main(int argc, char *argv[])
     return status;
     }
 
-  // main loop here
-  
-  // TODO  
-  
+  // main loop
+  while(1)
+    {
+    printf("Enter parameter#1 (float)     : ");
+    status=scanf("%f", &p1);
+    if(status<1)
+      break;
+    printf("Enter parameter#2 (signed int): ");
+    status=scanf("%d", &p2);
+    if(status<1)
+      break;
+    // send new parameters to R5
+    gMsgPtr->param1=p1;
+    gMsgPtr->param2=p2;
+    status= rpmsg_send(&lept, gMsgPtr, sizeof(LOOP_PARAM_MSG_TYPE));
+    if(status!=0)
+      LPRINTF("ERROR sending RPMSG\n");
+    }
   
   // cleanup and exit
   LPRINTF("\nExiting\n");
