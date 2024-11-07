@@ -587,10 +587,12 @@ int main()
 
   while(1)
     {
-    printf("\nTimer   IRQs: %lu\n",irq_cntr[TIMER_IRQ_CNTR]);
-    printf(  "GPIO    IRQs: %lu\n",irq_cntr[GPIO_IRQ_CNTR]);
-    printf(  "RegBank IRQs: %lu\n",irq_cntr[REGBANK_IRQ_CNTR]);
-    printf(  "RPMSG   IPIs: %lu\n",irq_cntr[IPI_CNTR]);
+    printf("\nTimer   IRQs            : %lu\n",irq_cntr[TIMER_IRQ_CNTR]);
+    printf(  "GPIO    IRQs            : %lu\n",irq_cntr[GPIO_IRQ_CNTR]);
+    printf(  "RegBank IRQs            : %lu\n",irq_cntr[REGBANK_IRQ_CNTR]);
+    printf(  "RPMSG   IPIs            : %lu\n",irq_cntr[IPI_CNTR]);
+    printf(  "Loop Parameter 1 (float): %f\n",gLoopParameters.param1);
+    printf(  "Loop Parameter 2 (int)  : %d\n",gLoopParameters.param1);
     printf("\nInput register number to read (0..15)\n");
     status=scanf("%u",&thereg);
     if(status>0)
