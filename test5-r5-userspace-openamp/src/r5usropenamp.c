@@ -566,7 +566,7 @@ int main()
   gLoopParameters.param2=-37;
 
 
-  LPRINTF("\nR5 test application #5 : shared PL resources + IRQs + IPC (openamp)\n");
+  LPRINTF("\nR5 test application #5 : shared PL resources + IRQs + IPC (openamp)\n\n");
 
 	LPRINTF("openamp lib version: %s (", openamp_version());
 	LPRINTF("Major: %d, ", openamp_version_major());
@@ -593,7 +593,7 @@ int main()
     printf(  "RegBank IRQs            : %lu\n",irq_cntr[REGBANK_IRQ_CNTR]);
     printf(  "RPMSG   IPIs            : %lu\n",irq_cntr[IPI_CNTR]);
     printf(  "Loop Parameter 1 (float): %f\n",gLoopParameters.param1);
-    printf(  "Loop Parameter 2 (int)  : %d\n",gLoopParameters.param1);
+    printf(  "Loop Parameter 2 (int)  : %d\n",gLoopParameters.param2);
     printf("\nInput register number to read (0..15)\n");
     status=scanf("%u",&thereg);
     if(status>0)

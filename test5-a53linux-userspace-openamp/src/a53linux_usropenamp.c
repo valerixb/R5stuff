@@ -308,6 +308,8 @@ int main(int argc, char *argv[])
   setvbuf (stdout, NULL, _IONBF, 0);
   setvbuf (stdin, NULL, _IONBF, 0);
 
+  LPRINTF("\nR5 test application #5 : shared PL resources + IRQs + IPC (openamp)\n\n");
+
   status = SetupSystem(&platform);
   if(status!=0)
     {

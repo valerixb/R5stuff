@@ -51,7 +51,6 @@ struct rpmsg_device *create_rpmsg_vdev(void *platform, unsigned int vdev_index,
     LPRINTF("failed rpmsg_init_vdev\r\n");
     goto err2;
     }
-  LPRINTF("initializing rpmsg vdev\r\n");
   return rpmsg_virtio_get_rpmsg_device(rpmsg_vdev);
 
   err2:
