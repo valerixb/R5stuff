@@ -581,35 +581,35 @@ int main()
   status = SetupSystem(&platform);
   if(status!=XST_SUCCESS)
     {
-    printf("ERROR Setting up System - aborting\n");
+    LPRINTF("ERROR Setting up System - aborting\n");
     return status;
     }
 
 
   while(1)
     {
-    printf("\nTimer   IRQs            : %lu\n",irq_cntr[TIMER_IRQ_CNTR]);
-    printf(  "GPIO    IRQs            : %lu\n",irq_cntr[GPIO_IRQ_CNTR]);
-    printf(  "RegBank IRQs            : %lu\n",irq_cntr[REGBANK_IRQ_CNTR]);
-    printf(  "RPMSG   IPIs            : %lu\n",irq_cntr[IPI_CNTR]);
-    printf(  "Loop Parameter 1 (float): %f\n",gLoopParameters.param1);
-    printf(  "Loop Parameter 2 (int)  : %d\n",gLoopParameters.param2);
-    printf("\nInput register number to read (0..15)\n");
+    LPRINTF("\nTimer   IRQs            : %lu\n",irq_cntr[TIMER_IRQ_CNTR]);
+    LPRINTF(  "GPIO    IRQs            : %lu\n",irq_cntr[GPIO_IRQ_CNTR]);
+    LPRINTF(  "RegBank IRQs            : %lu\n",irq_cntr[REGBANK_IRQ_CNTR]);
+    LPRINTF(  "RPMSG   IPIs            : %lu\n",irq_cntr[IPI_CNTR]);
+    LPRINTF(  "Loop Parameter 1 (float): %f\n",gLoopParameters.param1);
+    LPRINTF(  "Loop Parameter 2 (int)  : %d\n",gLoopParameters.param2);
+    LPRINTF("\nInput register number to read (0..15)\n");
     status=scanf("%u",&thereg);
     if(status>0)
       {
       if(thereg>15) break;
       theval=*(REGBANK+thereg);
-      printf("Reg #%02u is 0x%08X\n", thereg, theval);
+      LPRINTF("Reg #%02u is 0x%08X\n", thereg, theval);
       }
     }
 
-  printf("\nExiting\n");
+  LPRINTF("\nExiting\n");
 
   status = CleanupSystem(platform);
   if(status!=XST_SUCCESS)
     {
-    printf("ERROR Cleaning up System\n");
+    LPRINTF("ERROR Cleaning up System\n");
     // continue anyway, as we are shutting down
     //return status;
     }

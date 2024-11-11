@@ -39,6 +39,10 @@ SECTIONS
    *(.boot)
 } > psu_r5_tcm_ram_0_S_AXI_BASEADDR
 
+.bootdata : {
+   *(.bootdata)
+} > psu_r5_tcm_ram_0_S_AXI_BASEADDR
+
 .text : {
    *(.text)
    *(.text.*)
@@ -51,7 +55,7 @@ SECTIONS
    *(.vfp11_veneer)
    *(.ARM.extab)
    *(.gnu.linkonce.armextab.*)
-} > psu_r5_tcm_ram_1_S_AXI_BASEADDR
+} > psu_ddr_S_AXI_BASEADDR
 
 .init : {
    KEEP (*(.init))
