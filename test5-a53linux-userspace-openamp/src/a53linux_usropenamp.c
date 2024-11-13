@@ -17,16 +17,6 @@
 
 #include "a53linux_usropenamp.h"
 
-// change_me
-struct _payload {
-	unsigned long num;
-	unsigned long size;
-	unsigned char data[];
-};
-
-#define PAYLOAD_MIN_SIZE	1
-// /change_me
-
 // ##########  globals  #######################
 
 void *platform;
@@ -36,6 +26,7 @@ static LOOP_PARAM_MSG_TYPE gLoopParameters;
 static LOOP_PARAM_MSG_TYPE *gMsgPtr;
 struct rpmsg_device *rpdev;
 static struct remoteproc rproc_inst;
+static int ept_deleted = 0;
 
 struct remoteproc_priv rproc_priv = 
   {
@@ -46,120 +37,38 @@ struct remoteproc_priv rproc_priv =
   .ipi_chn_mask = IPI_CHN_BITMASK,
   };
 
-// change_me
-static struct _payload *i_payload;
-static int rnum = 0;
-static int err_cnt = 0;
-static int ept_deleted = 0;
-// /change_me
 
 
-/*-----------------------------------------------------------------------------*
- *  RPMSG endpoint callbacks
- *-----------------------------------------------------------------------------*/
-static int rpmsg_endpoint_cb(struct rpmsg_endpoint *ept, void *data, size_t len,
-			     uint32_t src, void *priv)
-{
-	int i;
-	struct _payload *r_payload = (struct _payload *)data;
+// ------------ RPMSG endpoint callbacks ----------
 
-	(void)ept;
-	(void)src;
-	(void)priv;
-	LPRINTF(" received payload number %lu of size %lu \r\n",
-		r_payload->num, (unsigned long)len);
+static int rpmsg_endpoint_cb(struct rpmsg_endpoint *ept, void *data, size_t len, uint32_t src, void *priv)
+  {
+  (void)ept;    // avoid warning on unused parameter
+  (void)src;    // avoid warning on unused parameter
+  (void)priv;   // avoid warning on unused parameter
 
-	if (r_payload->size == 0) {
-		LPERROR(" Invalid size of package is received.\r\n");
-		err_cnt++;
-		return RPMSG_SUCCESS;
-	}
-	/* Validate data buffer integrity. */
-	for (i = 0; i < (int)r_payload->size; i++) {
-		if (r_payload->data[i] != 0xA5) {
-			LPRINTF("Data corruption at index %d\r\n", i);
-			err_cnt++;
-			break;
-		}
-	}
-	rnum = r_payload->num + 1;
-	return RPMSG_SUCCESS;
-}
+  LPRINTF("Unexpected message from R5\n");
+  return RPMSG_SUCCESS;
+  }
 
 static void rpmsg_service_unbind(struct rpmsg_endpoint *ept)
-{
-	(void)ept;
-	rpmsg_destroy_ept(&lept);
-	LPRINTF("echo test: service is destroyed\r\n");
-	ept_deleted = 1;
-}
+  {
+  (void)ept;
+  rpmsg_destroy_ept(&lept);
+  LPRINTF("echo test: service is destroyed\r\n");
+  ept_deleted = 1;
+  }
 
-static void rpmsg_name_service_bind_cb(struct rpmsg_device *rdev,
-				       const char *name, uint32_t dest)
-{
-	LPRINTF("new endpoint notification is received.\r\n");
-	if (strcmp(name, RPMSG_SERVICE_NAME))
-		LPERROR("Unexpected name service %s.\r\n", name);
-	else
-		(void)rpmsg_create_ept(&lept, rdev, RPMSG_SERVICE_NAME,
-				       RPMSG_ADDR_ANY, dest,
-				       rpmsg_endpoint_cb,
-				       rpmsg_service_unbind);
-
-}
-
-/*-----------------------------------------------------------------------------*
- *  Application
- *-----------------------------------------------------------------------------*/
-int app (struct rpmsg_device *rdev, void *priv)
-{
-	int ret;
-	int i;
-	int size, max_size, num_payloads;
-	int expect_rnum = 0;
-
-	LPRINTF(" 1 - Send data to remote core, retrieve the echo");
-	LPRINTF(" and validate its integrity ..\r\n");
-
-	
-	for (i = 0, size = PAYLOAD_MIN_SIZE; i < num_payloads; i++, size++) {
-		i_payload->num = i;
-		i_payload->size = size;
-
-		/* Mark the data buffer. */
-		memset(&(i_payload->data[0]), 0xA5, size);
-
-		LPRINTF("sending payload number %lu of size %lu\r\n",
-			i_payload->num,
-			(unsigned long)(2 * sizeof(unsigned long)) + size);
-
-		ret = rpmsg_send(&lept, i_payload,
-				 (2 * sizeof(unsigned long)) + size);
-
-		if (ret < 0) {
-			LPERROR("Failed to send data...\r\n");
-			break;
-		}
-		LPRINTF("echo test: sent : %lu\r\n",
-			(unsigned long)(2 * sizeof(unsigned long)) + size);
-
-		expect_rnum++;
-		do {
-			platform_poll(priv);
-		} while ((rnum < expect_rnum) && !err_cnt && !ept_deleted);
-
-	}
-
-	LPRINTF("**********************************\r\n");
-	LPRINTF(" Test Results: Error count = %d \r\n", err_cnt);
-	LPRINTF("**********************************\r\n");
-	/* Destroy the RPMsg endpoint */
-	rpmsg_destroy_ept(&lept);
-	LPRINTF("Quitting application .. Echo test end\r\n");
-
-	metal_free_memory(i_payload);
-	return 0;
-}
+static void rpmsg_name_service_bind_cb(struct rpmsg_device *rdev, const char *name, uint32_t dest)
+  {
+  LPRINTF("new endpoint notification is received.\r\n");
+  if (strcmp(name, RPMSG_SERVICE_NAME))
+    LPERROR("Unexpected name service %s.\r\n", name);
+  else
+    (void)rpmsg_create_ept(&lept, rdev, 
+                           RPMSG_SERVICE_NAME, RPMSG_ADDR_ANY, dest, 
+                           rpmsg_endpoint_cb, rpmsg_service_unbind);
+  }
 
 
 // -----------------------------------------------------------
@@ -301,7 +210,7 @@ int CleanupSystem(void *platform)
 
 int main(int argc, char *argv[])
   {
-  int status, p2;
+  int status, p2, numbytes, msglen;
   float p1;
 
   // remove buffering from stdin and stdout
@@ -313,26 +222,27 @@ int main(int argc, char *argv[])
   status = SetupSystem(&platform);
   if(status!=0)
     {
-    printf("ERROR Setting up System - aborting\n");
+    LPRINTF("ERROR Setting up System - aborting\n");
     return status;
     }
 
   // main loop
+  msglen=sizeof(LOOP_PARAM_MSG_TYPE);
   while(1)
     {
-    printf("Enter parameter#1 (float)     : ");
+    LPRINTF("Enter parameter#1 (float)     : ");
     status=scanf("%f", &p1);
     if(status<1)
       break;
-    printf("Enter parameter#2 (signed int): ");
+    LPRINTF("Enter parameter#2 (signed int): ");
     status=scanf("%d", &p2);
     if(status<1)
       break;
     // send new parameters to R5
     gMsgPtr->param1=p1;
     gMsgPtr->param2=p2;
-    status= rpmsg_send(&lept, gMsgPtr, sizeof(LOOP_PARAM_MSG_TYPE));
-    if(status!=0)
+    numbytes= rpmsg_send(&lept, gMsgPtr, msglen);
+    if(numbytes<msglen)
       LPRINTF("ERROR sending RPMSG\n");
     }
   
