@@ -41,13 +41,15 @@ struct remoteproc_priv rproc_priv =
 
 // ------------ RPMSG endpoint callbacks ----------
 
+// I don't expect any messages from R5
 static int rpmsg_endpoint_cb(struct rpmsg_endpoint *ept, void *data, size_t len, uint32_t src, void *priv)
   {
   (void)ept;    // avoid warning on unused parameter
+  (void)data;   // avoid warning on unused parameter
+  (void)len;    // avoid warning on unused parameter
   (void)src;    // avoid warning on unused parameter
   (void)priv;   // avoid warning on unused parameter
 
-  LPRINTF("Unexpected message from R5\n");
   return RPMSG_SUCCESS;
   }
 
@@ -55,15 +57,15 @@ static void rpmsg_service_unbind(struct rpmsg_endpoint *ept)
   {
   (void)ept;
   rpmsg_destroy_ept(&lept);
-  LPRINTF("echo test: service is destroyed\r\n");
+  LPRINTF("rpmsg service is destroyed\n");
   ept_deleted = 1;
   }
 
 static void rpmsg_name_service_bind_cb(struct rpmsg_device *rdev, const char *name, uint32_t dest)
   {
-  LPRINTF("new endpoint notification is received.\r\n");
+  LPRINTF("new endpoint notification is received.\n");
   if (strcmp(name, RPMSG_SERVICE_NAME))
-    LPERROR("Unexpected name service %s.\r\n", name);
+    LPERROR("Unexpected name service %s.\n", name);
   else
     (void)rpmsg_create_ept(&lept, rdev, 
                            RPMSG_SERVICE_NAME, RPMSG_ADDR_ANY, dest, 
@@ -126,11 +128,9 @@ int SetupSystem(void **platformp)
   {
   int status, max_size;
   struct remoteproc *rproc;
-  struct metal_init_params metal_param = 
-    {
-    .log_handler = system_metal_logger,
-    .log_level = METAL_LOG_INFO,
-    };
+  struct metal_init_params metal_param = METAL_INIT_DEFAULTS;
+
+  metal_param.log_level = METAL_LOG_INFO;
 
   if(!platformp)
     {
@@ -244,6 +244,8 @@ int main(int argc, char *argv[])
     numbytes= rpmsg_send(&lept, gMsgPtr, msglen);
     if(numbytes<msglen)
       LPRINTF("ERROR sending RPMSG\n");
+    else
+      LPRINTF("Successfully sent RPMSG\n");
     }
   
   // cleanup and exit
