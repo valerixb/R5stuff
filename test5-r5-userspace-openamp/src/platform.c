@@ -72,6 +72,7 @@ int platform_poll(void *priv)
   while(1) 
     {
     flags = metal_irq_save_disable();
+    // if an IPI has occurred
     if(!(atomic_flag_test_and_set(&prproc->ipi_nokick)))
       {
       metal_irq_restore_enable(flags);

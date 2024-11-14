@@ -77,6 +77,7 @@ static int rpmsg_endpoint_cb(struct rpmsg_endpoint *ept, void *data, size_t len,
   (void)priv;   // avoid warning on unused parameter
   (void)src;    // avoid warning on unused parameter
   (void)ept;    // avoid warning on unused parameter
+
   // update the total number of received messages, for debug purposes
   irq_cntr[IPI_CNTR]++;
   // On reception of a shutdown we signal the application to terminate
@@ -226,8 +227,6 @@ int SetupIRQs(void)
     XScuGic_DistWriteReg(&interruptController, XSCUGIC_SPI_TARGET_OFFSET_CALC(int_id), target_cpu);
 	  }
   XScuGic_InterruptMaptoCpu(&interruptController, XPAR_CPU_ID, IPI_IRQ_VECT_ID);
-
-  Xil_ExceptionInit();
 
   Xil_ExceptionRegisterHandler(XIL_EXCEPTION_ID_INT,
                                (Xil_ExceptionHandler) XScuGic_InterruptHandler,
@@ -462,11 +461,10 @@ int SetupSystem(void **platformp)
   {
   int status;
   struct remoteproc *rproc;
-  struct metal_init_params metal_param = 
-    {
-    .log_handler = system_metal_logger,
-    .log_level = METAL_LOG_INFO,
-    };
+  struct metal_init_params metal_param = METAL_INIT_DEFAULTS;
+  unsigned int irqflags;
+
+  metal_param.log_level = METAL_LOG_INFO;
 
   if(!platformp)
     {
@@ -499,23 +497,33 @@ int SetupSystem(void **platformp)
   rpdev = create_rpmsg_vdev(rproc, 0, VIRTIO_DEV_DEVICE, NULL, NULL);
   if(!rpdev)
     {
-    LPERROR("Failed to create rpmsg virtio device.\n");
+    LPERROR("Failed to create rpmsg virtio device\n");
     return XST_FAILURE;
     }
   
   // init RPMSG framework
-  LPRINTF("Try to create rpmsg endpoint.\n");
+  LPRINTF("Try to create rpmsg endpoint\n");
   status = rpmsg_create_ept(&lept, rpdev, RPMSG_SERVICE_NAME,
                             RPMSG_ADDR_ANY, RPMSG_ADDR_ANY,
                             rpmsg_endpoint_cb,
                             rpmsg_service_unbind);
   if(status)
     {
-    LPERROR("Failed to create endpoint.\n");
+    LPERROR("Failed to create endpoint\n");
     return XST_FAILURE;
     }
-  LPRINTF("Successfully created rpmsg endpoint.\n");
+  LPRINTF("Successfully created rpmsg endpoint\n");
 
+  // enable IPIs for RPMSG
+/*  irqflags = metal_irq_save_disable();
+  metal_irq_restore_enable(irqflags);
+  status = remoteproc_get_notification(rproc, RSC_NOTIFY_ID_ANY);
+  if(status)
+    {
+    LPERROR("Failed to enable RPMSG IPIs\n");
+    return XST_FAILURE;
+    }
+*/
   return XST_SUCCESS;
   }
 
@@ -527,8 +535,6 @@ int CleanupSystem(void *platform)
   struct remoteproc *rproc = platform;
   
   status = CleanupIRQs();
-  if(status!=XST_SUCCESS)
-    return XST_FAILURE;
 
   rpmsg_destroy_ept(&lept);
   release_rpmsg_vdev(rpdev, platform);
@@ -543,7 +549,7 @@ int CleanupSystem(void *platform)
 	Xil_DCacheInvalidate();
 	Xil_ICacheInvalidate();
 
-  return XST_SUCCESS;
+  return status;
   }
 
 // -----------------------------------------------------------
@@ -594,14 +600,14 @@ int main()
     LPRINTF(  "RPMSG   IPIs            : %lu\n",irq_cntr[IPI_CNTR]);
     LPRINTF(  "Loop Parameter 1 (float): %f\n",gLoopParameters.param1);
     LPRINTF(  "Loop Parameter 2 (int)  : %d\n",gLoopParameters.param2);
-    LPRINTF("\nInput register number to read (0..15)\n");
-    status=scanf("%u",&thereg);
-    if(status>0)
-      {
-      if(thereg>15) break;
-      theval=*(REGBANK+thereg);
-      LPRINTF("Reg #%02u is 0x%08X\n", thereg, theval);
-      }
+    // can't use sscanf in the main loop, to avoid loosing RPMSGs,
+    // so I print all the registers each time I get an IRQ,
+    // which is at least once a second from the timer IRQ
+    for(thereg=0; thereg<16; thereg++)
+      LPRINTF(  "Regbank[%02u]             : 0x%08X\n",thereg, *(REGBANK+thereg));
+
+    _rproc_wait();
+    (void)remoteproc_get_notification(platform, RSC_NOTIFY_ID_ANY);
     }
 
   LPRINTF("\nExiting\n");
