@@ -218,13 +218,13 @@ int SetupIRQs(void)
     // Remove current CPU from interrupt target register
     target_cpu &= ~mask_cpu_id;
     XScuGic_DistWriteReg(&interruptController, XSCUGIC_SPI_TARGET_OFFSET_CALC(int_id), target_cpu);
-	  }
+    }
   XScuGic_InterruptMaptoCpu(&interruptController, XPAR_CPU_ID, IPI_IRQ_VECT_ID);
 
   Xil_ExceptionRegisterHandler(XIL_EXCEPTION_ID_INT,
                                (Xil_ExceptionHandler) XScuGic_InterruptHandler,
                                &interruptController);
-	XScuGic_Disable(&interruptController, IPI_IRQ_VECT_ID);
+  XScuGic_Disable(&interruptController, IPI_IRQ_VECT_ID);
   Xil_ExceptionEnable();
 
   // now register the IRQs I am interested in ----------------------------
@@ -516,12 +516,12 @@ int CleanupSystem(void *platform)
   if(rproc)
     remoteproc_remove(rproc);
 
-	metal_finish();
+  metal_finish();
 
-	Xil_DCacheDisable();
-	Xil_ICacheDisable();
-	Xil_DCacheInvalidate();
-	Xil_ICacheInvalidate();
+  Xil_DCacheDisable();
+  Xil_ICacheDisable();
+  Xil_DCacheInvalidate();
+  Xil_ICacheInvalidate();
 
   return status;
   }
@@ -548,15 +548,15 @@ int main()
 
   LPRINTF("\nR5 test application #5 : shared PL resources + IRQs + IPC (openamp)\n\n");
 
-	LPRINTF("openamp lib version: %s (", openamp_version());
-	LPRINTF("Major: %d, ", openamp_version_major());
-	LPRINTF("Minor: %d, ", openamp_version_minor());
-	LPRINTF("Patch: %d)\n", openamp_version_patch());
+  LPRINTF("openamp lib version: %s (", openamp_version());
+  LPRINTF("Major: %d, ", openamp_version_major());
+  LPRINTF("Minor: %d, ", openamp_version_minor());
+  LPRINTF("Patch: %d)\n", openamp_version_patch());
 
-	LPRINTF("libmetal lib version: %s (", metal_ver());
-	LPRINTF("Major: %d, ", metal_ver_major());
-	LPRINTF("Minor: %d, ", metal_ver_minor());
-	LPRINTF("Patch: %d)\n", metal_ver_patch());
+  LPRINTF("libmetal lib version: %s (", metal_ver());
+  LPRINTF("Major: %d, ", metal_ver_major());
+  LPRINTF("Minor: %d, ", metal_ver_minor());
+  LPRINTF("Patch: %d)\n", metal_ver_patch());
 
   status = SetupSystem(&platform);
   if(status!=XST_SUCCESS)
