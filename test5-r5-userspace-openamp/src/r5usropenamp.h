@@ -40,7 +40,6 @@
 
 //---------- openamp stuff -------------------------
 #define RPMSG_SERVICE_NAME         "rpmsg-uopenamp-loop-params"
-#define SHUTDOWN_MSG               0xEF56A55A
 
 //---------- IRQ stuff -----------------------------
 #define INTC_DEVICE_ID        XPAR_SCUGIC_SINGLE_DEVICE_ID

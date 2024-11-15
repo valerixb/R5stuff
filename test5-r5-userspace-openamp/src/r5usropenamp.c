@@ -80,13 +80,6 @@ static int rpmsg_endpoint_cb(struct rpmsg_endpoint *ept, void *data, size_t len,
 
   // update the total number of received messages, for debug purposes
   irq_cntr[IPI_CNTR]++;
-  // On reception of a shutdown we signal the application to terminate
-  if((*(unsigned int *)data) == SHUTDOWN_MSG)
-    {
-    LPRINTF("shutdown message is received.\n");
-    shutdown_req = 1;
-    return RPMSG_SUCCESS;
-    }
 
   // use msg to update parameters
   if(len<sizeof(LOOP_PARAM_MSG_TYPE))
@@ -572,8 +565,9 @@ int main()
     return status;
     }
 
-
-  while(1)
+  shutdown_req = 0;  
+  // shutdown_req will be set set to 1 by RPMSG unbind callback
+  while(!shutdown_req)
     {
     LPRINTF("\nTimer   IRQs            : %lu\n",irq_cntr[TIMER_IRQ_CNTR]);
     LPRINTF(  "GPIO    IRQs            : %lu\n",irq_cntr[GPIO_IRQ_CNTR]);
