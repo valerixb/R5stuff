@@ -194,6 +194,7 @@ int CleanupSystem(void *platform)
   if(rproc)
     remoteproc_remove(rproc);
   metal_finish();
+  return 0;
   }
 
 
