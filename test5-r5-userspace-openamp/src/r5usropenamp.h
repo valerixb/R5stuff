@@ -94,7 +94,6 @@ int SetupAXIGPIO(void);
 int SetupAXItimer(void);
 int SetupIRQs(void);
 int CleanupIRQs(void);
-static void system_metal_logger(enum metal_log_level level, const char *format, ...);
 int SetupSystem(void **platformp);
 int CleanupSystem(void *platform);
 void SetupExceptions(void);

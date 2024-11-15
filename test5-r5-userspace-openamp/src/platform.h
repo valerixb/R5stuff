@@ -53,7 +53,7 @@
 #define SHARED_MEM_SIZE 0x100000UL
 #define SHARED_BUF_OFFSET 0x8000UL
 
-#define _rproc_wait() asm volatile("wfi")
+#define WAIT_FOR_INTERRUPT() asm volatile("wfi")
 
 struct remoteproc_priv
   {

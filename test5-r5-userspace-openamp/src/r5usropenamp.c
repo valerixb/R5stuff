@@ -112,8 +112,8 @@ static void rpmsg_service_unbind(struct rpmsg_endpoint *ept)
 
 static void AssertPrint(const char8 *FilenamePtr, s32 LineNumber)
   {
-  xil_printf("ASSERT: File Name: %s ", FilenamePtr);
-  xil_printf("Line Number: %d\n", LineNumber);
+  LPRINTF("ASSERT: File Name: %s ", FilenamePtr);
+  LPRINTF("Line Number: %ld\n", LineNumber);
   }
 
 
@@ -124,7 +124,7 @@ void LocalAbortHandler(void *callbackRef)
   (void)callbackRef;   // avoid warning on unused parameter
 
   // Data Abort exception handler
-  printf("DATA ABORT exception\n");
+  LPRINTF("DATA ABORT exception\n");
   }
 
 
@@ -135,7 +135,7 @@ void LocalUndefinedHandler(void *callbackRef)
   (void)callbackRef;   // avoid warning on unused parameter
 
   // Undefined Instruction exception handler
-  printf("UNDEFINED INSTRUCTION exception\n");
+  LPRINTF("UNDEFINED INSTRUCTION exception\n");
   }
 
 
@@ -448,15 +448,6 @@ static struct remoteproc *SetupRpmsg(int proc_index, int rsc_index)
 
 // -----------------------------------------------------------
 
-static void system_metal_logger(enum metal_log_level level, const char *format, ...)
-  {
-  (void)level;
-  (void)format;
-  }
-
-
-// -----------------------------------------------------------
-
 int SetupSystem(void **platformp)
   {
   int status;
@@ -514,16 +505,6 @@ int SetupSystem(void **platformp)
     }
   LPRINTF("Successfully created rpmsg endpoint\n");
 
-  // enable IPIs for RPMSG
-/*  irqflags = metal_irq_save_disable();
-  metal_irq_restore_enable(irqflags);
-  status = remoteproc_get_notification(rproc, RSC_NOTIFY_ID_ANY);
-  if(status)
-    {
-    LPERROR("Failed to enable RPMSG IPIs\n");
-    return XST_FAILURE;
-    }
-*/
   return XST_SUCCESS;
   }
 
@@ -606,7 +587,7 @@ int main()
     for(thereg=0; thereg<16; thereg++)
       LPRINTF(  "Regbank[%02u]             : 0x%08X\n",thereg, *(REGBANK+thereg));
 
-    _rproc_wait();
+    WAIT_FOR_INTERRUPT();
     (void)remoteproc_get_notification(platform, RSC_NOTIFY_ID_ANY);
     }
 

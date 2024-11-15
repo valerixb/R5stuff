@@ -81,7 +81,7 @@ int platform_poll(void *priv)
         return ret;
       break;
       }
-    _rproc_wait();
+    WAIT_FOR_INTERRUPT();
     metal_irq_restore_enable(flags);
     }
   return 0;
