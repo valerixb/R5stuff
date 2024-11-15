@@ -50,5 +50,4 @@ static void *zynqmp_linux_r5_proc_mmap(struct remoteproc *rproc, metal_phys_addr
     metal_phys_addr_t *da, size_t size, unsigned int attribute, struct metal_io_region **io);
 static int zynqmp_linux_r5_proc_notify(struct remoteproc *rproc, uint32_t id);
 
-
 #endif

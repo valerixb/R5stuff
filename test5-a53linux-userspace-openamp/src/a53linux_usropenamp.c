@@ -188,9 +188,9 @@ int CleanupSystem(void *platform)
   {
   struct remoteproc *rproc = platform;
 
-	rpmsg_destroy_ept(&lept);
-	metal_free_memory(gMsgPtr);
-	release_rpmsg_vdev(rpdev, platform);
+  rpmsg_destroy_ept(&lept);
+  metal_free_memory(gMsgPtr);
+  release_rpmsg_vdev(rpdev, platform);
   if(rproc)
     remoteproc_remove(rproc);
   metal_finish();

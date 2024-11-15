@@ -47,7 +47,7 @@ struct remoteproc_priv
 
 #define RPU_CPU_ID          0
 #define IPI_CHN_BITMASK	    0x00000100
-#define IPI_DEV_NAME	      "ff340000.ipi"
+#define IPI_DEV_NAME        "ff340000.ipi"
 
 #define DEV_BUS_NAME        "platform" 
 #define SHM_DEV_NAME        "3ed20000.shm"
