@@ -12,8 +12,7 @@ static struct rpmsg_virtio_shm_pool shpool;
 
 
 struct rpmsg_device *create_rpmsg_vdev(void *platform, unsigned int vdev_index,
-    unsigned int role,
-    void (*rst_cb)(struct virtio_device *vdev),
+    unsigned int role, void (*rst_cb)(struct virtio_device *vdev),
     rpmsg_ns_bind_cb ns_bind_cb)
   {
   struct remoteproc *rproc = platform;

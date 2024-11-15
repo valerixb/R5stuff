@@ -115,15 +115,6 @@ static struct remoteproc *SetupRpmsg(int proc_index, int rsc_index)
 
 // -----------------------------------------------------------
 
-static void system_metal_logger(enum metal_log_level level, const char *format, ...)
-  {
-  (void)level;
-  (void)format;
-  }
-
-
-// -----------------------------------------------------------
-
 int SetupSystem(void **platformp)
   {
   int status, max_size;

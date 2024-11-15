@@ -58,20 +58,13 @@ struct remoteproc_priv
 #define SHARED_BUF_PA       0x3ED48000UL
 #define SHARED_BUF_SIZE     0x40000UL
 
-
 #define _rproc_wait() metal_cpu_yield()
 
-
-/* processor operations from r5 to a53. It defines
- * notification operation and remote processor managementi operations. */
-
-
-
+// --------- protos
 struct rpmsg_device *create_rpmsg_vdev(void *platform, unsigned int vdev_index,
-    unsigned int role,
-    void (*rst_cb)(struct virtio_device *vdev),
+    unsigned int role, void (*rst_cb)(struct virtio_device *vdev),
     rpmsg_ns_bind_cb ns_bind_cb);
 int platform_poll(void *platform);
 void release_rpmsg_vdev(struct rpmsg_device *rpdev, void *platform);
 
-#endif /* PLATFORM_INFO_H_ */
+#endif

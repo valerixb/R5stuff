@@ -28,19 +28,6 @@
 #define XPAR_XIPIPSU_0_BASE_ADDRESS 0xff310000
 #define XPAR_XIPIPSU_0_INT_ID 65
 
-// R5 memory attributes
-// already defined by the library; see file xreg_cortexr5.h
-// device, shareable:
-//#define DEVICE_SHARED       0x00000001U
-// device, non shareable:
-//#define DEVICE_NONSHARED    0x00000010U
-// Non cacheable, non shareable:
-//#define NORM_NSHARED_NCACHE 0x00000008U
-// Non cacheable, shareable:
-//#define NORM_SHARED_NCACHE  0x0000000CU
-// full access:
-//#define PRIV_RW_USER_RW     (0x00000003U<<8U)
-
 // Interrupt vectors
 #define IPI_IRQ_VECT_ID     XPAR_XIPIPSU_0_INT_ID
 #define POLL_BASE_ADDR      XPAR_XIPIPSU_0_BASE_ADDRESS

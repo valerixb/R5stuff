@@ -44,7 +44,6 @@ static int rpmsg_endpoint_cb(struct rpmsg_endpoint *ept, void *data, size_t len,
 static void rpmsg_service_unbind(struct rpmsg_endpoint *ept);
 static void rpmsg_name_service_bind_cb(struct rpmsg_device *rdev,
     const char *name, uint32_t dest);
-static void system_metal_logger(enum metal_log_level level, const char *format, ...);
 int SetupSystem(void **platformp);
 int CleanupSystem(void *platform);
 static struct remoteproc *SetupRpmsg(int proc_index, int rsc_index);
