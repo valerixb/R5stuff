@@ -31,12 +31,14 @@ Like rtest3irq2, but add axi TIMER with its interrupt
 
 ## test5 (baremetal R5 + linux on A53)
 Like rtest4irq3, but add inter-process communication between linux/A53 and baremetal R5.
-Userspace openamp is used; both sides can be debugged with vitis debugger 
-(R5 via JTAG and linux via TCF agent, as usual); for deployment, R5 application
+Userspace openamp is used; the code is directly derived fro the echo test example of Xilinx guide UG1186.
+Please note that both sides can be debugged with vitis debugger, 
+R5 via JTAG and linux via TCF agent, as usual. 
+For deployment, the R5 application
 can be added to boot image with petalinux-package (i.e. bootgen), while linux side is a normal executable,
 which can be started automatically at boot, if need so.
 
-It is divided into two vitis application projects:
+Tis test is divided into two vitis application projects:
 - test5-r5-userspace-openamp
 - test5-a53linux-userspace-openamp
 
