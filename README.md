@@ -29,6 +29,27 @@ Like rtest2irq1, but add axi GPIO with its interrupt
 ## rtest4irq3 (baremetal R5)
 Like rtest3irq2, but add axi TIMER with its interrupt
 
+## test5 (baremetal R5 + linux on A53)
+Like rtest4irq3, but add inter-process communication between linux/A53 and baremetal R5.
+Userspace openamp is used; both sides can be debugged with vitis debugger 
+(R5 via JTAG and linux via TCF agent, as usual); for deployment, R5 application
+can be added to boot image with petalinux-package (i.e. bootgen), while linux side is a normal executable,
+which can be started automatically at boot, if need so.
+
+It is divided into two vitis application projects:
+- test5-r5-userspace-openamp
+- test5-a53linux-userspace-openamp
+
+At boot, the R5 part starts and waits for connection (handshake) from linux part; 
+then the main loop is started, which waits for an interrupt (there is at least one every second,
+due to the timer interrupt) and prints the total number of received interrupts, 
+including the IPI = inter processor interrupt = incoming message from linux.
+It also prints the state of the register bank
+and the value of the two sample parameters (one float, one signed integer 32bit) communicated by linux side.
+
+On the linux side, you run the app and then you are asked to enter the value of the two parameters, 
+which are then sent to the R5 side. Press "e" to exit the loop and end linux application.
+
 
 
 
