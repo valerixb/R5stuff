@@ -6,12 +6,17 @@
 // this is the R5 side
 //
 
-#ifndef R5USROPENAMP_H_
-#define R5USROPENAMP_H_
+#ifndef MAIN_H_
+#define MAIN_H_
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <openamp/open_amp.h>
+#include <metal/alloc.h>
+#include "common.h"
+#include "platform.h"
+#include "rproc.h"
 #include "xil_io.h"
 #include "xparameters.h"
 #include "xil_cache.h"
@@ -24,22 +29,21 @@
 #include "platform.h"
 #include "xgpio.h"
 #include "xtmrctr.h"
-#include <openamp/open_amp.h>
 #include <openamp/version.h>
-#include <metal/alloc.h>
 #include <metal/version.h>
-#include "platform.h"
 #include "rsc_table.h"
-#include "zynqmp_r5_a53_rproc.h"
 
+//---------- openamp stuff  ------------------------
+#define IPI_DEV_NAME         "poll_dev"
+#define IPI_BUS_NAME         "generic"
+#define XPAR_XIPIPSU_0_BASE_ADDRESS 0xff310000
+#define XPAR_XIPIPSU_0_INT_ID 65
 
-// ##########  local defs  ###################
+// Interrupt vectors
+#define IPI_IRQ_VECT_ID     XPAR_XIPIPSU_0_INT_ID
+#define POLL_BASE_ADDR      XPAR_XIPIPSU_0_BASE_ADDRESS
+#define IPI_CHN_BITMASK     0x01000000
 
-#define LPRINTF(format, ...) printf(format, ##__VA_ARGS__)
-#define LPERROR(format, ...) LPRINTF("ERROR: " format, ##__VA_ARGS__)
-
-//---------- openamp stuff -------------------------
-#define RPMSG_SERVICE_NAME         "rpmsg-uopenamp-loop-params"
 
 //---------- IRQ stuff -----------------------------
 #define INTC_DEVICE_ID        XPAR_SCUGIC_SINGLE_DEVICE_ID

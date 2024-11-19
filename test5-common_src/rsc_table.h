@@ -3,7 +3,10 @@
 // IRQs from PL and 
 // interproc communications with A53/linux
 //
-// this is the linux/A53 side
+// this file populates resource table 
+// for BM remote for use by the Linux host
+//
+// this file is common to R5/baremetal and A53/linux
 //
 
 #ifndef RSC_TABLE_H_
@@ -12,17 +15,16 @@
 #include <stddef.h>
 #include <openamp/open_amp.h>
 
-
 #define NO_RESOURCE_ENTRIES         8
 
 // Place resource table in special ELF section
 #define __section_t(S)          __attribute__((__section__(#S)))
 #define __resource              __section_t(.resource_table)
 
-#define RPMSG_VDEV_DFEATURES    (1 << VIRTIO_RPMSG_F_NS)
+#define RPMSG_VDEV_DFEATURES        (1 << VIRTIO_RPMSG_F_NS)
 
 // VirtIO rpmsg device id
-#define VIRTIO_ID_RPMSG_            7
+#define VIRTIO_ID_RPMSG_             7
 
 #define NUM_VRINGS                  0x02
 #define VRING_ALIGN                 0x1000
@@ -34,7 +36,7 @@
 
 
 // Resource table for the given remote
-struct remote_resource_table
+struct remote_resource_table 
   {
   unsigned int version;
   unsigned int num;
@@ -46,6 +48,6 @@ struct remote_resource_table
   struct fw_rsc_vdev_vring rpmsg_vring1;
   }__attribute__((packed, aligned(0x100)));
 
-void *get_resource_table (int rsc_id, int *len);
+void *get_resource_table(int rsc_id, int *len);
 
-#endif /* RSC_TABLE_H_ */
+#endif

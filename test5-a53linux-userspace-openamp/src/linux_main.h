@@ -6,25 +6,25 @@
 // this is the linux/A53 side
 //
 
-#ifndef A53LINUX_USROPENAMP_H_
-#define A53LINUX_USROPENAMP_H_
+#ifndef MAIN_H_
+#define MAIN_H_
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
 #include <openamp/open_amp.h>
 #include <metal/alloc.h>
 #include "platform.h"
-#include "zynqmp_linux_r5_proc.h"
+#include "rproc.h"
+#include <string.h>
+#include "common.h"
 
-// ##########  local defs  ###################
-
-#define LPRINTF(format, ...) printf(format, ##__VA_ARGS__)
-#define LPERROR(format, ...) LPRINTF("ERROR: " format, ##__VA_ARGS__)
-
-//---------- openamp stuff -------------------------
-#define RPMSG_SERVICE_NAME         "rpmsg-uopenamp-loop-params"
+#define IPI_DEV_NAME        "ff340000.ipi"
+#define IPI_CHN_BITMASK     0x00000100
+#define DEV_BUS_NAME        "platform" 
+#define SHM_DEV_NAME        "3ed20000.shm"
+#define RSC_MEM_PA          0x3ED20000UL
+#define RSC_MEM_SIZE        0x2000UL
 
 // ##########  types  #######################
 typedef struct

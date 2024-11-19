@@ -3,7 +3,10 @@
 // IRQs from PL and 
 // interproc communications with A53/linux
 //
-// this is the linux/A53 side
+// this file populates resource table 
+// for BM remote for use by the Linux host
+//
+// this file is common to R5/baremetal and A53/linux
 //
 
 #include "rsc_table.h"
@@ -28,7 +31,7 @@ struct remote_resource_table __resource resources =
   {RING_RX, VRING_ALIGN, VRING_SIZE, 2, 0},
   };
 
-void *get_resource_table (int rsc_id, int *len)
+void *get_resource_table(int rsc_id, int *len)
   {
   (void) rsc_id;
   *len = sizeof(resources);

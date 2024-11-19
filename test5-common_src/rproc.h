@@ -3,19 +3,36 @@
 // IRQs from PL and 
 // interproc communications with A53/linux
 //
-// this is the R5 side
+// constant ARMR5 provides proper code for
+// A53/linux and R5/baremetal sides 
 //
 
-#ifndef ZYNQMP_R5_A53_RPROC_H_
-#define ZYNQMP_R5_A53_RPROC_H_
+#ifndef RPROC_H_
+#define RPROC_H_
 
 #include <metal/atomic.h>
-#include <metal/assert.h>
 #include <metal/device.h>
 #include <metal/irq.h>
 #include <metal/utilities.h>
 #include <openamp/rpmsg_virtio.h>
-#include "r5usropenamp.h"
+#include "platform.h"
+#include "common.h"
+
+#ifdef ARMR5
+// ########### R5 side
+#include <metal/assert.h>
+
+#else
+// ########### linux side
+#include <metal/io.h>
+#include <metal/alloc.h>
+#include <openamp/remoteproc.h>
+#include <string.h>
+#include <stdio.h>
+#include <sys/types.h>
+#include <sys/un.h>
+
+#endif
 
 // -------  IPI REGs OFFSETs
 // IPI trigger register offset
@@ -33,15 +50,15 @@
 
 // processor operations from r5 to a53. It defines
 // notification operation and remote processor management operations
-extern const struct remoteproc_ops zynqmp_r5_a53_proc_ops;
+extern const struct remoteproc_ops rproc_ops;
 
 // --------- protos
-static int zynqmp_r5_a53_proc_irq_handler(int vect_id, void *data);
-static struct remoteproc *zynqmp_r5_a53_proc_init(struct remoteproc *rproc, 
+static int rproc_irq_handler(int vect_id, void *data);
+static struct remoteproc *rproc_init(struct remoteproc *rproc,
     const struct remoteproc_ops *ops, void *arg);
-static void zynqmp_r5_a53_proc_remove(struct remoteproc *rproc);
-static void *zynqmp_r5_a53_proc_mmap(struct remoteproc *rproc, metal_phys_addr_t *pa,
+static void rproc_remove(struct remoteproc *rproc);
+static void *rproc_mmap(struct remoteproc *rproc, metal_phys_addr_t *pa,
     metal_phys_addr_t *da, size_t size, unsigned int attribute, struct metal_io_region **io);
-static int zynqmp_r5_a53_proc_notify(struct remoteproc *rproc, uint32_t id);
+static int rproc_notify(struct remoteproc *rproc, uint32_t id);
 
 #endif

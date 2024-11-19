@@ -3,7 +3,8 @@
 // IRQs from PL and 
 // interproc communications with A53/linux
 //
-// this is the linux/A53 side
+// constant ARMR5 provides proper code for
+// A53/linux and R5/baremetal sides 
 //
 
 #include "platform.h"
@@ -25,10 +26,17 @@ struct rpmsg_device *create_rpmsg_vdev(void *platform, unsigned int vdev_index,
   rpmsg_vdev = metal_allocate_memory(sizeof(*rpmsg_vdev));
   if(!rpmsg_vdev)
     return NULL;
-  shbuf_io = remoteproc_get_io_with_pa(rproc, SHARED_BUF_PA);
+#ifdef ARMR5
+// ########### R5 side
+  shbuf_io = remoteproc_get_io_with_pa(rproc, SHARED_MEM_PA);
+#else
+// ########### linux side
+  shbuf_io = remoteproc_get_io_with_pa(rproc, SHARED_MEM_PA + SHARED_BUF_OFFSET);
+#endif
+
   if(!shbuf_io)
     goto err1;
-  shbuf = metal_io_phys_to_virt(shbuf_io, SHARED_BUF_PA);
+  shbuf = metal_io_phys_to_virt(shbuf_io, SHARED_MEM_PA + SHARED_BUF_OFFSET);
 
   LPRINTF("creating remoteproc virtio\n");
   vdev = remoteproc_create_virtio(rproc, vdev_index, role, rst_cb);
@@ -71,6 +79,7 @@ int platform_poll(void *priv)
   while(1) 
     {
     flags = metal_irq_save_disable();
+    // if an IPI has occurred
     if(!(atomic_flag_test_and_set(&prproc->ipi_nokick)))
       {
       metal_irq_restore_enable(flags);

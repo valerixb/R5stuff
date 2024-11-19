@@ -15,7 +15,7 @@
 // latest rev: nov 5 2024
 //
 
-#include "a53linux_usropenamp.h"
+#include "linux_main.h"
 
 // ##########  globals  #######################
 
@@ -86,7 +86,7 @@ static struct remoteproc *SetupRpmsg(int proc_index, int rsc_index)
   (void)rsc_index;     // avoid warning on unused parameter
   rsc_size = RSC_MEM_SIZE;
   // init remoteproc instance
-  if(!remoteproc_init(&rproc_inst, &zynqmp_linux_r5_proc_ops, &rproc_priv))
+  if(!remoteproc_init(&rproc_inst, &rproc_ops, &rproc_priv))
     return NULL;
   LPRINTF("Remoteproc successfully initialized\n");
   // mmap resource table
@@ -130,7 +130,7 @@ int SetupSystem(void **platformp)
     }
 
   metal_init(&metal_param);
-
+  
   rproc = SetupRpmsg(0,0);
   if(!rproc)
     return -1;
@@ -210,6 +210,11 @@ int main(int argc, char *argv[])
   setvbuf (stdin, NULL, _IONBF, 0);
 
   LPRINTF("\nR5 test application #5 : shared PL resources + IRQs + IPC (openamp)\n\n");
+#ifdef ARMR5
+  LPRINTF("This is R5/baremetal side\n\n");
+#else
+  LPRINTF("This is A53/linux side\n\n");
+#endif
 
   status = SetupSystem(&platform);
   if(status!=0)

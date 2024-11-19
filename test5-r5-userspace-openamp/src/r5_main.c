@@ -4,6 +4,7 @@
 // interproc communications with A53/linux
 //
 // this is the R5 side
+//
 // features:
 //    - IRQ from register bank
 //    - IRQ from AXI GPIO
@@ -14,7 +15,7 @@
 // latest rev: nov 5 2024
 //
 
-#include "r5usropenamp.h"
+#include "r5_main.h"
 
 
 // ##########  globals  #######################
@@ -28,7 +29,7 @@ struct rpmsg_device *rpdev;
 
 // Polling information used by remoteproc operations.
 static metal_phys_addr_t poll_phys_addr = POLL_BASE_ADDR;
-struct metal_device kick_device = 
+struct metal_device ipi_device = 
   {
   .name = "poll_dev",
   .bus = NULL,
@@ -52,8 +53,8 @@ struct metal_device kick_device =
 
 static struct remoteproc_priv rproc_priv =
   {
-  .kick_dev_name = KICK_DEV_NAME,
-  .kick_dev_bus_name = KICK_BUS_NAME,
+  .ipi_name = IPI_DEV_NAME,
+  .ipi_bus_name = IPI_BUS_NAME,
   .ipi_chn_mask = IPI_CHN_BITMASK,
   };
 
@@ -408,10 +409,10 @@ static struct remoteproc *SetupRpmsg(int proc_index, int rsc_index)
   (void)proc_index;    // avoid warning on unused parameter
   rsc_table = get_resource_table(rsc_index, &rsc_size);
   // register IPI device
-  if(metal_register_generic_device(&kick_device))
+  if(metal_register_generic_device(&ipi_device))
     return NULL;
   // init remoteproc instance
-  if(!remoteproc_init(&rproc_inst, &zynqmp_r5_a53_proc_ops, &rproc_priv))
+  if(!remoteproc_init(&rproc_inst, &rproc_ops, &rproc_priv))
     return NULL;
   // mmap resource table
   pa = (metal_phys_addr_t)rsc_table;
@@ -547,6 +548,11 @@ int main()
 
 
   LPRINTF("\nR5 test application #5 : shared PL resources + IRQs + IPC (openamp)\n\n");
+#ifdef ARMR5
+  LPRINTF("This is R5/baremetal side\n\n");
+#else
+  LPRINTF("This is A53/linux side\n\n");
+#endif
 
   LPRINTF("openamp lib version: %s (", openamp_version());
   LPRINTF("Major: %d, ", openamp_version_major());
@@ -581,7 +587,7 @@ int main()
     for(thereg=0; thereg<16; thereg++)
       LPRINTF(  "Regbank[%02u]             : 0x%08X\n",thereg, *(REGBANK+thereg));
 
-    WAIT_FOR_INTERRUPT();
+    _rproc_wait();
     (void)remoteproc_get_notification(platform, RSC_NOTIFY_ID_ANY);
     }
 
