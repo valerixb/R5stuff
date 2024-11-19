@@ -42,6 +42,7 @@ which can be started automatically at boot, if need so.
 Tis test is divided into two vitis application projects:
 - test5-r5-userspace-openamp
 - test5-a53linux-userspace-openamp
+
 In these directories you'll find only the main.c/.h; all the rest of the code is common and can be found
  in test5-common_src directory.
 It's possible to test the definition of symbol "ARMR5" at compile time, to find out whether the code
