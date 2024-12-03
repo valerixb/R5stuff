@@ -68,6 +68,7 @@ XGpio theGpio;
 static XGpio_Config *gpioConfig;
 XTmrCtr theTimer;
 static XTmrCtr_Config *timerConfig;
+float gTimerIRQlatency;
 
 
 // ##########  implementation  ################
@@ -172,14 +173,44 @@ void GpioISR(void *callbackRef)
 
 static void TimerISR(void *callbackRef, u8 timer_num)
   {
-  //XTmrCtr *timerPtr = (XTmrCtr *)callbackRef;
-  (void)callbackRef;   // avoid warning on unused parameter
-  
-  (void)timer_num;   // avoid warning on unused parameter
+  XTmrCtr *timerPtr = (XTmrCtr *)callbackRef;
+  u32 cnts;
+
   // AXI timer Interrupt Servicing Routine
+
+  // read current counter value to measure latency
+  cnts=XTmrCtr_GetValue(timerPtr, timer_num);
+  gTimerIRQlatency=(timerConfig->SysClockFreqHz/TIMER_FREQ_HZ - cnts*1.0)/timerConfig->SysClockFreqHz;
+
+  // increment number of received timer interrupts
   irq_cntr[TIMER_IRQ_CNTR]++;
+
   // don't use printf in ISR! Xilinx standalone stdio is NOT thread safe
   //printf("IRQ received from AXI timer (%lu)\n", ++irq_cntr[TIMER_IRQ_CNTR]);
+  }
+
+
+void FiqHandler(void *cb)
+  {
+  XTmrCtr *timerPtr = (XTmrCtr *)cb;
+  u32 controlStatusReg, loadReg;
+  u32 cnts;
+
+  //printf("FIQ\n");
+  
+  // read current counter value to measure latency
+  cnts=XTmrCtr_GetValue(timerPtr, TIMER_NUMBER);
+  loadReg=XTmrCtr_ReadReg(theTimer.BaseAddress, TIMER_NUMBER, XTC_TLR_OFFSET);
+  gTimerIRQlatency=(loadReg - cnts)/(1.0*timerConfig->SysClockFreqHz);
+  //gTimerIRQlatency=(timerConfig->SysClockFreqHz/TIMER_FREQ_HZ - cnts*1.0)/timerConfig->SysClockFreqHz;
+
+  // increment number of received timer interrupts
+  irq_cntr[TIMER_IRQ_CNTR]++;
+
+  // clear AXI timer IRQ bit to acknowledge interrupt
+  controlStatusReg = XTmrCtr_ReadReg(timerPtr->BaseAddress, TIMER_NUMBER, XTC_TCSR_OFFSET);
+  XTmrCtr_WriteReg(timerPtr->BaseAddress, TIMER_NUMBER, XTC_TCSR_OFFSET, controlStatusReg | XTC_CSR_INT_OCCURED_MASK);
+
   }
 
 
@@ -192,6 +223,7 @@ int SetupIRQs(void)
   uint32_t int_id;
   uint32_t mask_cpu_id = ((u32)0x1 << XPAR_CPU_ID);
   uint32_t target_cpu;
+  u32 reg;
 
   mask_cpu_id |= mask_cpu_id << 8U;
   mask_cpu_id |= mask_cpu_id << 16U;
@@ -226,7 +258,7 @@ int SetupIRQs(void)
                                (Xil_ExceptionHandler) XScuGic_InterruptHandler,
                                &interruptController);
   XScuGic_Disable(&interruptController, IPI_IRQ_VECT_ID);
-  Xil_ExceptionEnable();
+  //Xil_ExceptionEnable();
 
   // now register the IRQs I am interested in ----------------------------
 
@@ -275,8 +307,28 @@ int SetupIRQs(void)
 
 
   // Setup AXI timer IRQs ---------------------------------
+  // register it as a FIQ; in Vivado prj, the timer IRQ line
+  // is physically connected to PS pin "nfiq0_lpd_rpu" (negated)
+
   // register ISR into standalone AXI timer driver
   XTmrCtr_SetHandler(&theTimer, (XTmrCtr_Handler)TimerISR, (void *)&theTimer);
+
+  // disable GIC FIQ, so that we get FIQs by dedicated PS pin only
+  reg = XScuGic_ReadReg(XPAR_SCUGIC_CPU_BASEADDR, 0);
+  XScuGic_WriteReg(XPAR_SCUGIC_CPU_BASEADDR, 0, reg & ~8);
+
+  reg = XScuGic_ReadReg(XPAR_SCUGIC_DIST_BASEADDR, 0);
+
+
+  // register FIQ interrupt
+  Xil_ExceptionRegisterHandler(XIL_EXCEPTION_ID_FIQ_INT,
+    (Xil_ExceptionHandler)FiqHandler,
+    (void *)&theTimer);
+//  Xil_ExceptionRegisterHandler(XIL_EXCEPTION_ID_FIQ_INT,
+//    (Xil_ExceptionHandler)XTmrCtr_InterruptHandler,
+//    (void *)&theTimer);
+
+/*
   // now register AXI timer driver own ISR into the GIC
   status=XScuGic_Connect(&interruptController, INTC_TIMER_IRQ_ID,
                          (Xil_ExceptionHandler)XTmrCtr_InterruptHandler,
@@ -287,12 +339,18 @@ int SetupIRQs(void)
   // set priority and endge sensitivity
   XScuGic_GetPriorityTriggerType(&interruptController, INTC_TIMER_IRQ_ID, &irqPriority, &irqSensitivity);
   //printf("AXI timer old priority=0x%02X; old sensitivity=0x%02X\n", irqPriority, irqSensitivity);
-  //irqPriority = 0;           // in step of 8; 0=highest; 248=lowest
+  irqPriority = 0;           // in step of 8; 0=highest; 248=lowest
   irqSensitivity=0x03;         // rising edge
   XScuGic_SetPriorityTriggerType(&interruptController, INTC_TIMER_IRQ_ID, irqPriority, irqSensitivity);
   // enable the IRQ
   XScuGic_Enable(&interruptController, INTC_TIMER_IRQ_ID);
-  // start timer
+*/
+
+  // now enable both IRQ and FIQ
+  //Xil_ExceptionEnableMask(XIL_EXCEPTION_IRQ);
+  Xil_ExceptionEnableMask(XIL_EXCEPTION_ALL);
+
+  // now start timer
   XTmrCtr_Start(&theTimer, TIMER_NUMBER);
 
 
@@ -350,6 +408,7 @@ int SetupAXIGPIO(void)
 int SetupAXItimer(void)
   {
   int status;
+  u32 loadreg;
 
   // XTmrCtr_Initialize calls XTmrCtr_LookupConfig, XTmrCtr_CfgInitialize and XTmrCtr_InitHw
   // I prefer to call them explicitly to get a copy of the configuration structure, 
@@ -380,6 +439,11 @@ int SetupAXItimer(void)
   // set timer period
   XTmrCtr_SetResetValue(&theTimer, TIMER_NUMBER,
           (u32)(timerConfig->SysClockFreqHz/TIMER_FREQ_HZ));
+  
+  //loadreg=XTmrCtr_ReadReg(theTimer.BaseAddress, TIMER_NUMBER, XTC_TLR_OFFSET);
+  //LPRINTF("Timer period= %f s = %u counts\n", loadreg/(1.*timerConfig->SysClockFreqHz), loadreg);
+
+  gTimerIRQlatency=0;
 
   return XST_SUCCESS;
   }
@@ -581,6 +645,7 @@ int main()
     LPRINTF(  "RPMSG   IPIs            : %lu\n",irq_cntr[IPI_CNTR]);
     LPRINTF(  "Loop Parameter 1 (float): %f\n",gLoopParameters.param1);
     LPRINTF(  "Loop Parameter 2 (int)  : %d\n",gLoopParameters.param2);
+    LPRINTF(  "Timer IRQ latency (ns)  : %.0f\n",gTimerIRQlatency*1.e9);
     // can't use sscanf in the main loop, to avoid loosing RPMSGs,
     // so I print all the registers each time I get an IRQ,
     // which is at least once a second from the timer IRQ

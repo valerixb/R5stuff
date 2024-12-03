@@ -39,6 +39,48 @@ SECTIONS
    *(.boot)
 } > psu_r5_tcm_ram_0_S_AXI_BASEADDR
 
+/* custom sections to map time critical data/code to TCMs */
+.tcma_text : {
+  *(.tcma_text)
+} > psu_r5_tcm_ram_0_S_AXI_BASEADDR
+
+.tcmb_text : {
+  *(.tcmb_text)
+  *xtmrctr.c.obj(.text)
+  *xscugic.c.obj(.text)
+  *vectors.c.obj(.text)
+  *asm_vectors.S.obj(.text)
+/*
+  *xtmrctr_intr.c.obj(.text)
+  *xscugic_intr.c.obj(.text)
+ */
+/*
+  *.S.obj(.text)
+  *.c.obj(.text) 
+*/
+/*
+  *(.text)
+*/
+} > psu_r5_tcm_ram_1_S_AXI_BASEADDR
+
+.tcmb_data : {
+  . = ALIGN(4);
+  *(.tcmb_data)
+  *xscugic_intr.o(.data)
+  *xil_exception.o(.data)
+  . = ALIGN(4);
+} > psu_r5_tcm_ram_1_S_AXI_BASEADDR
+
+.tcmb_bss (NOLOAD) : {
+  . = ALIGN(4);
+  __tcmb_bss_start__ = .;
+  *(.tcmb_bss)
+  *xscugic_intr.o(.bss)
+  *xil_exception.o(.bss)
+  . = ALIGN(4);
+  __tcmb_bss_end__ = .;
+} > psu_r5_tcm_ram_1_S_AXI_BASEADDR
+
 .bootdata : {
    *(.bootdata)
 } > psu_r5_tcm_ram_0_S_AXI_BASEADDR
@@ -53,7 +95,7 @@ SECTIONS
    *(.glue_7)
    *(.glue_7t)
    *(.vfp11_veneer)
-   *(.ARM.extab)
+   *(.ARM.extab) 
    *(.gnu.linkonce.armextab.*)
 } > psu_ddr_S_AXI_BASEADDR
 
