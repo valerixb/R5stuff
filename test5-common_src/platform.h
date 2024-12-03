@@ -22,8 +22,8 @@
 #include "common.h"
 
 #define SHARED_MEM_PA       0x3ED40000UL
-#define SHARED_MEM_SIZE     0x100000UL
-#define SHARED_BUF_OFFSET   0x8000UL
+#define SHARED_MEM_SIZE     0x30000UL
+#define SHARED_BUF_OFFSET    0x8000UL
 
 
 #ifdef ARMR5
