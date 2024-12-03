@@ -69,6 +69,7 @@ static XGpio_Config *gpioConfig;
 XTmrCtr theTimer;
 static XTmrCtr_Config *timerConfig;
 float gTimerIRQlatency;
+int gTimerIRQoccurred;
 
 
 // ##########  implementation  ################
@@ -193,24 +194,24 @@ static void TimerISR(void *callbackRef, u8 timer_num)
 void FiqHandler(void *cb)
   {
   XTmrCtr *timerPtr = (XTmrCtr *)cb;
-  u32 controlStatusReg, loadReg;
-  u32 cnts;
+  u32 controlStatusReg, loadReg, cnts;
 
   //printf("FIQ\n");
-  
+
   // read current counter value to measure latency
   cnts=XTmrCtr_GetValue(timerPtr, TIMER_NUMBER);
-  loadReg=XTmrCtr_ReadReg(theTimer.BaseAddress, TIMER_NUMBER, XTC_TLR_OFFSET);
+  loadReg=XTmrCtr_ReadReg(timerPtr->BaseAddress, TIMER_NUMBER, XTC_TLR_OFFSET);
   gTimerIRQlatency=(loadReg - cnts)/(1.0*timerConfig->SysClockFreqHz);
   //gTimerIRQlatency=(timerConfig->SysClockFreqHz/TIMER_FREQ_HZ - cnts*1.0)/timerConfig->SysClockFreqHz;
-
-  // increment number of received timer interrupts
-  irq_cntr[TIMER_IRQ_CNTR]++;
 
   // clear AXI timer IRQ bit to acknowledge interrupt
   controlStatusReg = XTmrCtr_ReadReg(timerPtr->BaseAddress, TIMER_NUMBER, XTC_TCSR_OFFSET);
   XTmrCtr_WriteReg(timerPtr->BaseAddress, TIMER_NUMBER, XTC_TCSR_OFFSET, controlStatusReg | XTC_CSR_INT_OCCURED_MASK);
 
+  // increment number of received timer interrupts
+  irq_cntr[TIMER_IRQ_CNTR]++;
+  // signal main loop that a new timer IRQ occurred
+  gTimerIRQoccurred++;
   }
 
 
@@ -328,23 +329,23 @@ int SetupIRQs(void)
 //    (Xil_ExceptionHandler)XTmrCtr_InterruptHandler,
 //    (void *)&theTimer);
 
-/*
-  // now register AXI timer driver own ISR into the GIC
-  status=XScuGic_Connect(&interruptController, INTC_TIMER_IRQ_ID,
-                         (Xil_ExceptionHandler)XTmrCtr_InterruptHandler,
-                         (void *)&theTimer);
-  if(status!=XST_SUCCESS)
-    return XST_FAILURE;
 
-  // set priority and endge sensitivity
-  XScuGic_GetPriorityTriggerType(&interruptController, INTC_TIMER_IRQ_ID, &irqPriority, &irqSensitivity);
-  //printf("AXI timer old priority=0x%02X; old sensitivity=0x%02X\n", irqPriority, irqSensitivity);
-  irqPriority = 0;           // in step of 8; 0=highest; 248=lowest
-  irqSensitivity=0x03;         // rising edge
-  XScuGic_SetPriorityTriggerType(&interruptController, INTC_TIMER_IRQ_ID, irqPriority, irqSensitivity);
-  // enable the IRQ
-  XScuGic_Enable(&interruptController, INTC_TIMER_IRQ_ID);
-*/
+//  // now register AXI timer driver own ISR into the GIC
+//  status=XScuGic_Connect(&interruptController, INTC_TIMER_IRQ_ID,
+//                         (Xil_ExceptionHandler)XTmrCtr_InterruptHandler,
+//                         (void *)&theTimer);
+//  if(status!=XST_SUCCESS)
+//    return XST_FAILURE;
+//
+//  // set priority and endge sensitivity
+//  XScuGic_GetPriorityTriggerType(&interruptController, INTC_TIMER_IRQ_ID, &irqPriority, &irqSensitivity);
+//  //printf("AXI timer old priority=0x%02X; old sensitivity=0x%02X\n", irqPriority, irqSensitivity);
+//  irqPriority = 0;           // in step of 8; 0=highest; 248=lowest
+//  irqSensitivity=0x03;         // rising edge
+//  XScuGic_SetPriorityTriggerType(&interruptController, INTC_TIMER_IRQ_ID, irqPriority, irqSensitivity);
+//  // enable the IRQ
+//  XScuGic_Enable(&interruptController, INTC_TIMER_IRQ_ID);
+
 
   // now enable both IRQ and FIQ
   //Xil_ExceptionEnableMask(XIL_EXCEPTION_IRQ);
@@ -444,6 +445,7 @@ int SetupAXItimer(void)
   //LPRINTF("Timer period= %f s = %u counts\n", loadreg/(1.*timerConfig->SysClockFreqHz), loadreg);
 
   gTimerIRQlatency=0;
+  gTimerIRQoccurred=0;
 
   return XST_SUCCESS;
   }
@@ -653,7 +655,17 @@ int main()
       LPRINTF(  "Regbank[%02u]             : 0x%08X\n",thereg, *(REGBANK+thereg));
 
     _rproc_wait();
+    // check whether we have a message from A53/linux
     (void)remoteproc_get_notification(platform, RSC_NOTIFY_ID_ANY);
+
+    if(gTimerIRQoccurred!=0)
+      {
+      // reset timer IRQ flag
+      gTimerIRQoccurred=0;
+
+      // do something...
+      }
+
     }
 
   LPRINTF("\nExiting\n");

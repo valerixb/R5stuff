@@ -66,8 +66,6 @@ SECTIONS
 .tcmb_data : {
   . = ALIGN(4);
   *(.tcmb_data)
-  *xscugic_intr.o(.data)
-  *xil_exception.o(.data)
   . = ALIGN(4);
 } > psu_r5_tcm_ram_1_S_AXI_BASEADDR
 
@@ -75,8 +73,6 @@ SECTIONS
   . = ALIGN(4);
   __tcmb_bss_start__ = .;
   *(.tcmb_bss)
-  *xscugic_intr.o(.bss)
-  *xil_exception.o(.bss)
   . = ALIGN(4);
   __tcmb_bss_end__ = .;
 } > psu_r5_tcm_ram_1_S_AXI_BASEADDR
