@@ -1,0 +1,69 @@
+/include/ "system-conf.dtsi"
+/ {
+
+serial@ff010000 {
+                status = "disabled";
+                };
+
+aliases {
+                /delete-property/ serial1;
+        };
+
+reserved-memory {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		ranges;
+
+  rproc_0_reserved: rproc@3ed000000 {
+                                    no-map;
+                                    reg = <0x0 0x3ed00000 0x0 0x1000000>;
+                                    };
+
+	};
+
+  axi {
+        /* UIO device node for vring device memory */
+        vring: vring@3ed40000 {
+                              compatible = "vring_uio";
+                              reg = <0x0 0x3ed40000 0x0 0x40000>;
+                              };
+        /* Shared memory (APU to RPU) */
+        shm0: shm@3ed20000 {
+                    compatible = "shm_uio";
+                    reg = <0x0 0x3ed20000 0x0 0x0100000>;
+                    };
+        /* IPI device */
+        ipi0: ipi@0xff340000 {
+                    compatible = "ipi_uio";
+                    reg = <0x0 0xff340000 0x0 0x1000>;
+                    interrupt-parent = <&gic>;
+                    interrupts = <0 29 4>;
+                    };
+       };
+
+};
+
+
+/delete-node/ &uart1;
+
+
+&axi_gpio_0 {
+            /delete-property/ interrupt-controller ;
+            /delete-property/ interrupt-names ;
+            /delete-property/ interrupt-parent ;
+            /delete-property/ interrupts ;
+            xlnx,interrupt-present = <0x0>;
+            };
+
+&axi_timer_0 {
+             /delete-property/ interrupt-names ;
+             /delete-property/ interrupt-parent ;
+             /delete-property/ interrupts ;
+             };
+
+&regbank_0   {
+             /delete-property/ interrupt-names ;
+             /delete-property/ interrupt-parent ;
+             /delete-property/ interrupts ;
+             };
+
