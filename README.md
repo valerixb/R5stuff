@@ -17,7 +17,7 @@ See picture of the block design:
 ![PL block design for sample R5 apps](https://github.com/user-attachments/assets/adc81bdd-4bd1-4589-8356-ba22d7154d88)
 
 ### PL system for test 5
-A fast interrupt (FIQ) port is added for the R5 processor: it will be used to serve thetimer interrupt with minimum latency.
+A fast interrupt (FIQ) port is added for the R5 processor: it will be used to serve the timer interrupt with minimum latency.
 
 Vivado configuration:
 ![image](https://github.com/user-attachments/assets/7654c99d-a96f-49e1-96cf-908f22f1e26c)
@@ -73,7 +73,7 @@ which are then sent to the R5 side. Press "e" to exit the loop and end linux app
 the R5 side receives a notification and ends cleanly as well.
 
 In the linker script, critical code is put into TCMB to reduce timer IRQ latency to a minimum (350ns); 
-also critical functions are put into TCMB with ARM __attribute__(section) directive; see file r5_main.h.
+also critical functions are put into TCMB with ARM \_\_attribute__(section) directive; see file r5_main.h.
 
 
 
