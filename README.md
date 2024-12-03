@@ -14,15 +14,18 @@ in this example there are:
 - a custom AXI IP with a register bank ("REGBANK")); it can generate an interrupt; it is representative of the glue logic to interface ADC and DAC
 
 See picture of the block design:
+
 ![PL block design for sample R5 apps](https://github.com/user-attachments/assets/adc81bdd-4bd1-4589-8356-ba22d7154d88)
 
 ### PL system for test 5
 A fast interrupt (FIQ) port is added for the R5 processor: it will be used to serve the timer interrupt with minimum latency.
 
 Vivado configuration:
+
 ![image](https://github.com/user-attachments/assets/7654c99d-a96f-49e1-96cf-908f22f1e26c)
 
 In the block design the timer IRQ is now routed (inverted) to the nFIQ pin:
+
 ![image](https://github.com/user-attachments/assets/d1bccbe7-511f-46d6-a55e-c894c508b6d3)
 
 
