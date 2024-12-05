@@ -24,6 +24,7 @@
 #define SHARED_MEM_PA       0x3ED40000UL
 #define SHARED_MEM_SIZE     0x30000UL
 #define SHARED_BUF_OFFSET    0x8000UL
+#define SHARED_BUF_SIZE     (SHARED_MEM_SIZE - SHARED_BUF_OFFSET)
 
 
 #ifdef ARMR5
@@ -31,8 +32,6 @@
 #include <metal/assert.h>
 #include "xparameters.h"
 #include "xil_cache.h"
-
-#define SHARED_BUF_SIZE      (SHARED_MEM_SIZE - SHARED_BUF_OFFSET)
 
 #define _rproc_wait() asm volatile("wfi")
 
@@ -45,8 +44,6 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/un.h>
-
-#define SHARED_BUF_SIZE     0x40000UL
 
 #define _rproc_wait() metal_cpu_yield()
 
