@@ -22,7 +22,7 @@
 #define IPI_DEV_NAME        "ff340000.ipi"
 #define IPI_CHN_BITMASK     0x00000100
 #define DEV_BUS_NAME        "platform" 
-#define SHM_DEV_NAME        "3ed20000.shm"
+#define SHM_DEV_NAME        "3ed40000.shm"
 #define RSC_MEM_PA          0x3ED48000UL
 #define RSC_MEM_SIZE        0x2000UL
 
