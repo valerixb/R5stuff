@@ -48,12 +48,16 @@ Like rtest3irq2, but add axi TIMER with its interrupt
 Like rtest4irq3, but add inter-process communication between linux/A53 and baremetal R5. 
 In addition, timer IRQ is now a fast interrupt (FIQ) and served by a dedicated ISR.
 
-Userspace openamp is used; the code is directly derived fro the echo test example of Xilinx guide UG1186.
+Userspace openamp is used; the code is directly derived from the echo test example of Xilinx guide UG1186.
 Please note that both sides can be debugged with vitis debugger (even at the same time), 
 R5 via JTAG and linux via TCF agent, as usual. 
 For deployment, the R5 application
 can be added to boot image with petalinux-package (i.e. bootgen), while linux side is a normal executable,
 which can be started automatically at boot, if need so.
+
+Memory regions have been cleaned up and rationalized with respect to the examples; this is the used configuration:
+
+![mem_regions](https://github.com/user-attachments/assets/dd7a94b4-e0bc-4795-8b43-05451f3c4879)
 
 This test is divided into two vitis application projects:
 - test5-r5-userspace-openamp
@@ -70,6 +74,7 @@ due to the timer interrupt) and prints the total number of received interrupts,
 including the IPI = inter processor interrupt = incoming message from linux.
 It also prints the state of the register bank
 and the value of the two sample parameters (one float, one signed integer 32bit) communicated by linux side.
+Latest timer interrupt latency is printed as well.
 
 On the linux side, you run the app and then you are asked to enter the value of the two parameters, 
 which are then sent to the R5 side. Press "e" to exit the loop and end linux application; at that point,
